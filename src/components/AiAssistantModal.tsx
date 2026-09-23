@@ -23,7 +23,7 @@ interface AiAssistantModalProps {
 export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
   isOpen,
   onClose,
-  defaultType = 'spintax_comments',
+  defaultType = 'targeting',
   accountNiche = 'Saúde e Bem-Estar',
   onApplySpintax,
   onApplyWelcomeDm,
@@ -121,10 +121,9 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
         {/* Tab Selection */}
         <div className="flex items-center gap-1 p-1 bg-neutral-950 rounded-lg border border-neutral-800">
           {[
-            { id: 'spintax_comments', label: 'Spintax Comentários' },
-            { id: 'welcome_dm', label: 'DM Boas-Vindas' },
-            { id: 'keyword_dm', label: 'DM Gatilho de Venda' },
-            { id: 'targeting', label: 'Estratégia de Alvos' },
+            { id: 'targeting', label: 'Estratégia de Alvos & Hashtags' },
+            { id: 'profile_bio', label: 'Bio & Posicionamento' },
+            { id: 'growth_strategy', label: 'Táticas de Crescimento' },
           ].map((t) => (
             <button
               key={t.id}
@@ -203,15 +202,6 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
                   {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                   <span>{copied ? 'Copiado!' : 'Copiar'}</span>
                 </button>
-                {(activeType === 'spintax_comments' || activeType === 'welcome_dm') && (
-                  <button
-                    onClick={handleApply}
-                    className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 font-semibold"
-                  >
-                    <ArrowRight className="w-3 h-3" />
-                    <span>{applied ? 'Aplicado!' : 'Aplicar na Configuração'}</span>
-                  </button>
-                )}
               </div>
             </div>
 

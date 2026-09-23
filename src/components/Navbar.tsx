@@ -48,8 +48,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const tabs = [
     { id: 'dashboard', label: 'Painel Geral' },
     { id: 'targeting', label: 'Segmentação' },
-    { id: 'engagement', label: 'Engajamento' },
-    { id: 'directs', label: 'Direct & Funis' },
     { id: 'warmup', label: 'Segurança & Warm-up' },
     { id: 'accounts', label: 'Contas & Proxies' },
   ];

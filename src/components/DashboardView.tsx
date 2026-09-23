@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { 
   Heart, 
   UserPlus, 
+  UserMinus,
   MessageCircle, 
   Eye, 
-  Send, 
   TrendingUp, 
   Shield, 
   AlertCircle,
@@ -103,7 +103,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const likesPct = Math.round((account.dailyActions.likes / account.dailyLimits.likes) * 100);
   const followsPct = Math.round((account.dailyActions.follows / account.dailyLimits.follows) * 100);
   const storiesPct = Math.round((account.dailyActions.stories / account.dailyLimits.stories) * 100);
-  const dmsPct = Math.round((account.dailyActions.dms / account.dailyLimits.dms) * 100);
+  const unfollowsPct = Math.round((account.dailyActions.unfollows / (account.dailyLimits.unfollows || 1)) * 100);
 
   return (
     <div className="space-y-6">
@@ -256,29 +256,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* DMs e Respostas Automáticas */}
+        {/* Unfollow / Limpeza Segura */}
         <div className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-4">
           <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
-            <span className="font-medium text-neutral-300">DMs Enviadas</span>
-            <Send className="w-4 h-4 text-purple-400" />
+            <span className="font-medium text-neutral-300">Unfollows Hoje</span>
+            <UserMinus className="w-4 h-4 text-sky-400" />
           </div>
           <div className="flex items-baseline justify-between mb-2">
             <span className="text-2xl font-bold text-white font-mono tabular-nums">
-              {account.dailyActions.dms}
+              {account.dailyActions.unfollows}
             </span>
             <span className="text-xs text-neutral-400 font-mono tabular-nums">
-              Limite: {account.dailyLimits.dms}
+              Limite: {account.dailyLimits.unfollows}
             </span>
           </div>
           <div className="w-full bg-neutral-800 rounded-full h-1.5 overflow-hidden">
             <div 
-              className="bg-purple-500 h-1.5 rounded-full transition-all duration-500" 
-              style={{ width: `${Math.min(100, dmsPct)}%` }}
+              className="bg-sky-500 h-1.5 rounded-full transition-all duration-500" 
+              style={{ width: `${Math.min(100, unfollowsPct)}%` }}
             ></div>
           </div>
           <div className="flex justify-between text-[11px] text-neutral-500 mt-2 font-mono tabular-nums">
-            <span>{dmsPct}% do limite diário</span>
-            <span>100% entregues</span>
+            <span>{unfollowsPct}% do limite</span>
+            <span>Limpeza de Não-Seguidores</span>
           </div>
         </div>
       </div>
@@ -420,7 +420,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto p-1 bg-neutral-950 rounded-md border border-neutral-800">
-            {['all', 'like', 'comment', 'follow', 'story', 'dm', 'warmup'].map((type) => (
+            {['all', 'like', 'follow', 'story', 'unfollow', 'warmup'].map((type) => (
               <button
                 key={type}
                 onClick={() => setLogFilter(type)}

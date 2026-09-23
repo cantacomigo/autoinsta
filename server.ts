@@ -314,39 +314,30 @@ app.post('/api/gemini/generate', async (req: Request, res: Response) => {
   try {
     if (!geminiApiKey || !genAI) {
       // Graceful fallback with rich templates if API key is not yet set
-      if (type === 'spintax_comments') {
+      if (type === 'profile_bio') {
         return res.json({
-          text: `{Sensacional|Excelente|Show de bola|Incrível|Muito bom} esse {conteúdo|post|vídeo}, @{username}! {Parabéns pelo trabalho|Sempre agregando valor|Muito inspirador|Dica valiosa}! {👏🔥|🚀👏|🔝💯}`
+          text: `✨ Transformando vidas através de ${niche || 'conteúdo de valor'}\n📍 Olímpia / SP e Região\n💡 Dicas diárias e novidades exclusivas nos Stories\n👇 Acompanhe de perto:`
         });
       }
-      if (type === 'welcome_dm') {
+      if (type === 'growth_strategy') {
         return res.json({
-          text: `Olá {primeiro_nome}! Seja muito bem-vindo(a) ao meu perfil 👋 Preparei um conteúdo exclusivo para você que acabou de chegar. Me conta: qual o seu maior desafio hoje em ${niche || 'seu negócio'}?`
-        });
-      }
-      if (type === 'keyword_dm') {
-        return res.json({
-          text: `E aí {primeiro_nome}! Vi que você comentou no nosso post sobre ${niche || 'nosso material'}. Conforme prometido, aqui está o seu acesso direto: 🔗 https://exemplo.com/acesso-vip`
+          text: `📈 Plano de Crescimento Seguro para ${niche || 'seu perfil'}:\n1. Interaja com os curtidores dos últimos 3 posts de 5 perfis concorrentes locais.\n2. Visualize de 100 a 200 stories/dia com reações esporádicas.\n3. Alterne horários de atividade (9h às 21h) mantendo 50s-100s de delay entre ações.`
         });
       }
       return res.json({
-        text: `Configuração otimizada para o nicho de ${niche}: Recomendado Modo Seguro nos primeiros 7 dias, foco em seguidores de 3 perfis concorrentes de referência e intervalo de 55 a 110 segundos entre ações.`
+        text: `🎯 Estratégia de Segmentação Recomendada para ${niche || 'seu nicho'}:\n• Hashtags principais: #${(niche || 'nicho').toLowerCase().replace(/\s+/g, '')} #olimpiasp #dicas${(niche || 'nicho').toLowerCase().replace(/\s+/g, '')}\n• Concorrentes: busque os 3 perfis locais com maior número de comentários nos últimos 7 dias.\n• Localização: marque pontos de encontro, praças e centros comerciais da cidade.`
       });
     }
 
-    let systemInstruction = "Você é um especialista em automação e crescimento orgânico no Instagram (AutoInsta). Responda sempre em português do Brasil de forma concisa e prática.";
+    let systemInstruction = "Você é um especialista em automação e crescimento orgânico no Instagram (AutoInsta). Responda sempre em português do Brasil de forma concisa, direta e altamente acionável.";
     let promptText = "";
 
-    if (type === 'spintax_comments') {
-      promptText = `Crie uma variação em formato Spintax (com sintaxe {opcao1|opcao2|opcao3}) para comentários humanizados e genuínos no Instagram para o nicho "${niche || 'geral'}". 
-Inclua variáveis como @{username} e emojis naturais. Retorne APENAS a linha com o formato Spintax pronto para copiar e colar, sem explicações adicionais.`;
-    } else if (type === 'welcome_dm') {
-      promptText = `Crie uma mensagem de Direct (DM) de boas-vindas para novos seguidores no Instagram para o nicho "${niche || 'negócios'}".
-Deve ser acolhedora, humanizada, com gancho para iniciar uma conversa e usar a variável {primeiro_nome}. Retorne apenas o texto da mensagem.`;
-    } else if (type === 'keyword_dm') {
-      promptText = `Crie uma mensagem de direct rápida e persuasiva para ser enviada automaticamente quando o usuário comentar uma palavra-chave no post do Instagram sobre "${niche || 'oferta'}". Use {primeiro_nome} e um placeholder de link [LINK_AQUI]. Retorne apenas o texto.`;
+    if (type === 'profile_bio') {
+      promptText = `Crie 2 opções de Biografia (Bio) de alta conversão para perfil do Instagram no nicho/cidade "${niche}". Inclua proposta de valor clara, emojis adequados e chamada para ação (CTA). ${customPrompt || ''}`;
+    } else if (type === 'growth_strategy') {
+      promptText = `Crie um plano tático de 3 passos de crescimento orgânico no Instagram para o nicho/cidade "${niche}". Foco em seguir perfis qualificados, curtir fotos recentes e ver stories sem tomar bloqueio temporário da Meta. ${customPrompt || ''}`;
     } else {
-      promptText = customPrompt || `Dê 3 dicas rápidas de segmentação no Instagram para o nicho "${niche}".`;
+      promptText = customPrompt || `Sugira 5 hashtags de alto engajamento, 3 tipos de contas concorrentes de referência e 2 recomendações de localização para segmentação no Instagram para o nicho/cidade "${niche}".`;
     }
 
     const response = await genAI.models.generateContent({

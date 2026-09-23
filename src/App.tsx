@@ -7,8 +7,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { DashboardView } from './components/DashboardView';
 import { TargetingView } from './components/TargetingView';
-import { EngagementView } from './components/EngagementView';
-import { DirectAutomationView } from './components/DirectAutomationView';
 import { WarmUpSecurityView } from './components/WarmUpSecurityView';
 import { AccountsProxiesView } from './components/AccountsProxiesView';
 import { AiAssistantModal } from './components/AiAssistantModal';
@@ -414,7 +412,7 @@ export default function App() {
   const executeManualAction = useCallback(async () => {
     if (!selectedAccount) return;
 
-    const possibleActions: ActionType[] = ['like', 'comment', 'follow', 'story', 'dm'];
+    const possibleActions: ActionType[] = ['like', 'follow', 'story'];
     const selectedAction = possibleActions[Math.floor(Math.random() * possibleActions.length)];
 
     const targetUsers = targeting.competitorAccounts.length > 0 
@@ -458,18 +456,11 @@ export default function App() {
       if (selectedAction === 'like') {
         const tag = targeting.hashtags[Math.floor(Math.random() * targeting.hashtags.length)] || '#vidasaudavel';
         detail = `Curtiu ${automation.likesPerProfile} publicações de perfis qualificados na hashtag ${tag}`;
-      } else if (selectedAction === 'comment') {
-        const template = automation.commentsSpintax[0] || 'Sensacional esse post, @{username}! 👏';
-        const cleanUser = targetUser.replace('@', '');
-        const parsed = parseSpintax(template, { username: cleanUser, primeiro_nome: cleanUser });
-        detail = `Comentou: "${parsed}"`;
       } else if (selectedAction === 'follow') {
         const comp = targeting.competitorAccounts[0] || '@concorrente';
         detail = `Seguiu novo perfil qualificado do público de ${comp}`;
       } else if (selectedAction === 'story') {
-        detail = `Visualizou 4 stories e interagiu com enquete recente`;
-      } else if (selectedAction === 'dm') {
-        detail = `Gatilho de direct enviado: "${automation.keywordTriggers[0]?.keyword || 'QUERO'}"`;
+        detail = `Visualizou 4 stories e interagiu com o perfil de ${targetUser}`;
       }
     }
 
@@ -495,10 +486,8 @@ export default function App() {
         if (acc.id !== selectedAccountId) return acc;
         const currentActions = { ...acc.dailyActions };
         if (selectedAction === 'like') currentActions.likes += 1;
-        if (selectedAction === 'comment') currentActions.comments += 1;
         if (selectedAction === 'follow') currentActions.follows += 1;
         if (selectedAction === 'story') currentActions.stories += 1;
-        if (selectedAction === 'dm') currentActions.dms += 1;
 
         const updated = {
           ...acc,
@@ -572,7 +561,7 @@ export default function App() {
         onSelectAccount={handleSelectAccount}
         isAutomationRunning={isAutomationRunning}
         onToggleAutomation={handleToggleAutomation}
-        onOpenAiModal={() => openAiWithPrompt('spintax_comments')}
+        onOpenAiModal={() => openAiWithPrompt('targeting')}
         currentUser={currentUser}
         onGoogleSignIn={handleGoogleSignIn}
         onOpenRealAutomationModal={() => setRealAutomationModalOpen(true)}
@@ -591,8 +580,6 @@ export default function App() {
           <span className="text-neutral-300 capitalize">
             {currentTab === 'dashboard' && 'Painel Geral'}
             {currentTab === 'targeting' && 'Segmentação de Público'}
-            {currentTab === 'engagement' && 'Engajamento & Ações'}
-            {currentTab === 'directs' && 'Direct Message & Funis'}
             {currentTab === 'warmup' && 'Segurança & Aquecimento'}
             {currentTab === 'accounts' && 'Contas & Proxies'}
           </span>
@@ -624,22 +611,6 @@ export default function App() {
           <TargetingView
             targeting={targeting}
             onUpdateTargeting={handleUpdateTargeting}
-            onOpenAiWithPrompt={openAiWithPrompt}
-          />
-        )}
-
-        {currentTab === 'engagement' && (
-          <EngagementView
-            automation={automation}
-            onUpdateAutomation={handleUpdateAutomation}
-            onOpenAiWithPrompt={openAiWithPrompt}
-          />
-        )}
-
-        {currentTab === 'directs' && (
-          <DirectAutomationView
-            automation={automation}
-            onUpdateAutomation={handleUpdateAutomation}
             onOpenAiWithPrompt={openAiWithPrompt}
           />
         )}
