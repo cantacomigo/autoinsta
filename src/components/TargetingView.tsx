@@ -150,6 +150,26 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
         </div>
       </div>
 
+      {/* Info Banner: Instagram anti-scraping notice & best practices */}
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs space-y-2">
+        <div className="flex items-center gap-2 font-semibold text-amber-300 text-sm">
+          <Info className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>O Instagram não está exibindo os seguidores na Web? Entenda o motivo:</span>
+        </div>
+        <p className="leading-relaxed text-neutral-300">
+          A Meta/Instagram adicionou uma restrição anti-raspagem (anti-scraping) na versão Web para perfis grandes ou comerciais. Ao clicar em <em>"Seguidores"</em>, a janela abre vazia com o aviso <em>"Você verá todas as pessoas que seguem você aqui"</em> para impedir extração em massa.
+        </p>
+        <div className="pt-2 border-t border-amber-500/20 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-neutral-200">
+          <span className="font-semibold text-amber-300">🚀 Alternativas com resultado 5x maior:</span>
+          <span className="text-neutral-300">
+            • <strong>Curtidores e Comentadores dos posts recentes</strong> (perfis 100% ativos hoje).
+          </span>
+          <span className="text-neutral-300">
+            • <strong>Localização e Hashtags da cidade</strong> (alcança moradores reais).
+          </span>
+        </div>
+      </div>
+
       {/* Grid: Fontes de Alvo */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
@@ -161,9 +181,19 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
                 <Hash className="w-4 h-4 text-rose-400" />
                 Hashtags Segmentadas
               </span>
-              <span className="text-xs text-neutral-400 font-mono tabular-nums">
-                {targeting.hashtags.length} ativas
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-400 font-mono tabular-nums">
+                  {targeting.hashtags.length} ativas
+                </span>
+                {targeting.hashtags.length > 0 && (
+                  <button
+                    onClick={() => onUpdateTargeting({ ...targeting, hashtags: [] })}
+                    className="text-[10px] text-neutral-500 hover:text-rose-400 underline cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-xs text-neutral-400 mb-3">
               O robô interage com as publicações mais recentes postadas nestas hashtags.
@@ -216,9 +246,19 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
                 <Users className="w-4 h-4 text-emerald-400" />
                 Seguidores de Concorrentes
               </span>
-              <span className="text-xs text-neutral-400 font-mono tabular-nums">
-                {targeting.competitorAccounts.length} perfis
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-400 font-mono tabular-nums">
+                  {targeting.competitorAccounts.length} perfis
+                </span>
+                {targeting.competitorAccounts.length > 0 && (
+                  <button
+                    onClick={() => onUpdateTargeting({ ...targeting, competitorAccounts: [] })}
+                    className="text-[10px] text-neutral-500 hover:text-rose-400 underline cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-xs text-neutral-400 mb-3">
               Alcança os seguidores mais ativos e engajados das contas que são suas referências.
@@ -269,9 +309,19 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
                 <MapPin className="w-4 h-4 text-amber-400" />
                 Localizações & Check-ins
               </span>
-              <span className="text-xs text-neutral-400 font-mono tabular-nums">
-                {targeting.locations.length} locais
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-400 font-mono tabular-nums">
+                  {targeting.locations.length} locais
+                </span>
+                {targeting.locations.length > 0 && (
+                  <button
+                    onClick={() => onUpdateTargeting({ ...targeting, locations: [] })}
+                    className="text-[10px] text-neutral-500 hover:text-rose-400 underline cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-xs text-neutral-400 mb-3">
               Interage com publicações marcadas em cidades, bairros ou locais específicos.
@@ -322,17 +372,27 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
                 <MessageSquare className="w-4 h-4 text-purple-400" />
                 Comentadores de Posts / Explorar
               </span>
-              <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={targeting.exploreFeed}
-                  onChange={(e) =>
-                    onUpdateTargeting({ ...targeting, exploreFeed: e.target.checked })
-                  }
-                  className="rounded border-neutral-700 bg-neutral-950 text-rose-600 focus:ring-0"
-                />
-                <span>Feed Explorar</span>
-              </label>
+              <div className="flex items-center gap-3">
+                {targeting.postCommenters.length > 0 && (
+                  <button
+                    onClick={() => onUpdateTargeting({ ...targeting, postCommenters: [] })}
+                    className="text-[10px] text-neutral-500 hover:text-rose-400 underline cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                )}
+                <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={targeting.exploreFeed}
+                    onChange={(e) =>
+                      onUpdateTargeting({ ...targeting, exploreFeed: e.target.checked })
+                    }
+                    className="rounded border-neutral-700 bg-neutral-950 text-rose-600 focus:ring-0"
+                  />
+                  <span>Feed Explorar</span>
+                </label>
+              </div>
             </div>
             <p className="text-xs text-neutral-400 mb-3">
               Extrai e engaja com os usuários que comentaram em posts virais do seu nicho.
