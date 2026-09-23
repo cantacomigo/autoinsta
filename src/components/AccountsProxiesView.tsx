@@ -17,7 +17,7 @@ import { InstagramAccount, ProxyConfig } from '../types';
 interface AccountsProxiesViewProps {
   accounts: InstagramAccount[];
   proxies: ProxyConfig[];
-  selectedAccount: InstagramAccount;
+  selectedAccount?: InstagramAccount | null;
   onSelectAccount: (acc: InstagramAccount) => void;
   onAddAccount: (newAcc: Partial<InstagramAccount>) => void;
   onRemoveAccount: (id: string) => void;
@@ -26,6 +26,8 @@ interface AccountsProxiesViewProps {
   onTestProxy: (proxy: ProxyConfig) => Promise<void>;
   onAssignProxyToAccount: (accountId: string, proxyId: string) => void;
   onEditAccount?: (acc: InstagramAccount) => void;
+  onWipeAllData?: () => void;
+  onRestoreDefaults?: () => void;
 }
 
 export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
@@ -40,6 +42,8 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
   onTestProxy,
   onAssignProxyToAccount,
   onEditAccount,
+  onWipeAllData,
+  onRestoreDefaults,
 }) => {
   // Modals state
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
@@ -163,69 +167,82 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
             Perfis Instagram Gerenciados ({accounts.length})
           </h3>
           <span className="text-xs text-neutral-400">
-            Conta Ativa no Painel: <strong className="text-white font-mono">@{selectedAccount.username}</strong>
+            Conta Ativa no Painel: <strong className="text-white font-mono">{selectedAccount ? `@${selectedAccount.username}` : 'Nenhuma'}</strong>
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-          {accounts.map((acc) => {
-            const isCurrent = acc.id === selectedAccount.id;
-            const assignedProxy = proxies.find((p) => p.id === acc.proxyId);
+        {accounts.length === 0 ? (
+          <div className="py-8 text-center border border-dashed border-neutral-800 rounded-xl bg-neutral-950/40">
+            <p className="text-sm text-neutral-400 mb-3">Nenhuma conta cadastrada no momento.</p>
+            <button
+              onClick={() => setShowAddAccountModal(true)}
+              className="px-4 py-2 text-xs font-semibold rounded-lg bg-rose-500 hover:bg-rose-400 text-white transition-colors cursor-pointer"
+            >
+              + Cadastrar Primeira Conta
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {accounts.map((acc) => {
+              const isCurrent = selectedAccount && acc.id === selectedAccount.id;
+              const assignedProxy = proxies.find((p) => p.id === acc.proxyId);
 
-            return (
-              <div
-                key={acc.id}
-                className={`p-4 rounded-xl border transition-all ${
-                  isCurrent
-                    ? 'border-rose-500/80 bg-neutral-900 shadow-md'
-                    : 'border-neutral-800 bg-neutral-950/60 hover:border-neutral-700'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={acc.avatar}
-                      alt={acc.username}
-                      referrerPolicy="no-referrer"
-                      className="w-12 h-12 rounded-full object-cover border border-neutral-700"
-                    />
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-sm text-white">@{acc.username}</span>
-                        {isCurrent && (
-                          <span className="text-[10px] font-mono bg-rose-500/10 text-rose-300 border border-rose-500/20 px-1.5 py-0.2 rounded">
-                            Painel Ativo
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-neutral-400">{acc.displayName}</p>
-                      <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-500 mt-1 tabular-nums">
-                        <span>{acc.followers.toLocaleString()} seguidores</span>
-                        <span>·</span>
-                        <span>{acc.postsCount} posts</span>
+              return (
+                <div
+                  key={acc.id}
+                  className={`p-4 rounded-xl border transition-all ${
+                    isCurrent
+                      ? 'border-rose-500/80 bg-neutral-900 shadow-md'
+                      : 'border-neutral-800 bg-neutral-950/60 hover:border-neutral-700'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={acc.avatar}
+                        alt={acc.username}
+                        referrerPolicy="no-referrer"
+                        className="w-12 h-12 rounded-full object-cover border border-neutral-700"
+                      />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-sm text-white">@{acc.username}</span>
+                          {isCurrent && (
+                            <span className="text-[10px] font-mono bg-rose-500/10 text-rose-300 border border-rose-500/20 px-1.5 py-0.2 rounded">
+                              Painel Ativo
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-neutral-400">{acc.displayName}</p>
+                        <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-500 mt-1 tabular-nums">
+                          <span>{acc.followers.toLocaleString()} seguidores</span>
+                          <span>·</span>
+                          <span>{acc.postsCount} posts</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => onEditAccount && onEditAccount(acc)}
-                      className="text-neutral-400 hover:text-amber-400 p-1 rounded hover:bg-neutral-800 transition-colors"
-                      title="Editar dados reais desta conta"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    {accounts.length > 1 && (
+                    <div className="flex items-center gap-1">
                       <button
-                        onClick={() => onRemoveAccount(acc.id)}
-                        className="text-neutral-500 hover:text-rose-400 p-1 rounded hover:bg-neutral-800 transition-colors"
-                        title="Desconectar conta"
+                        onClick={() => onEditAccount && onEditAccount(acc)}
+                        className="text-neutral-400 hover:text-amber-400 p-1.5 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+                        title="Editar dados reais desta conta"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Tem certeza que deseja remover @${acc.username}? Ela não voltará ao atualizar a página.`)) {
+                            onRemoveAccount(acc.id);
+                          }
+                        }}
+                        className="text-neutral-500 hover:text-rose-400 p-1.5 rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+                        title="Excluir conta permanentemente"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
 
                 {/* Account Details & Proxy Selection */}
                 <div className="pt-3 border-t border-neutral-850 grid grid-cols-2 gap-3 text-xs">
@@ -265,6 +282,7 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
             );
           })}
         </div>
+        )}
       </div>
 
       {/* 2. Gestor de Proxies */}
@@ -281,7 +299,18 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
           </div>
         </div>
 
-        <div className="space-y-3 pt-1">
+        {proxies.length === 0 ? (
+          <div className="py-8 text-center border border-dashed border-neutral-800 rounded-xl bg-neutral-950/40">
+            <p className="text-sm text-neutral-400 mb-3">Nenhum proxy cadastrado no momento.</p>
+            <button
+              onClick={() => setShowAddProxyModal(true)}
+              className="px-4 py-2 text-xs font-semibold rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white transition-colors cursor-pointer"
+            >
+              + Cadastrar Proxy Dedicado
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3 pt-1">
           {proxies.map((proxy) => {
             const isTesting = testingProxyId === proxy.id;
 
@@ -331,9 +360,13 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
                   </button>
 
                   <button
-                    onClick={() => onRemoveProxy(proxy.id)}
-                    className="text-neutral-500 hover:text-rose-400 p-1"
-                    title="Excluir proxy"
+                    onClick={() => {
+                      if (window.confirm(`Deseja remover o proxy "${proxy.name}"?`)) {
+                        onRemoveProxy(proxy.id);
+                      }
+                    }}
+                    className="text-neutral-500 hover:text-rose-400 p-1 cursor-pointer"
+                    title="Excluir proxy permanentemente"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -341,6 +374,47 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
               </div>
             );
           })}
+        </div>
+        )}
+      </div>
+
+      {/* 3. Gerenciamento Geral de Dados & Reset Permanente */}
+      <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-5 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-white">Gerenciamento e Limpeza Geral de Dados</h3>
+            <p className="text-xs text-neutral-400 mt-0.5">
+              Controle permanente do armazenamento. Seus dados são salvos localmente e sincronizados na nuvem Firestore.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {onRestoreDefaults && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Deseja restaurar as contas e configurações padrão de exemplo?')) {
+                    onRestoreDefaults();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-300 font-medium transition-colors cursor-pointer"
+              >
+                ↺ Restaurar Dados de Exemplo
+              </button>
+            )}
+            {onWipeAllData && (
+              <button
+                onClick={() => {
+                  if (window.confirm('ATENÇÃO: Tem certeza que deseja excluir TUDO (todas as contas, proxies, segmentações e logs)? Ao atualizar a página, NADA voltará.')) {
+                    onWipeAllData();
+                  }
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 hover:border-rose-600 text-xs text-rose-300 hover:text-white font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Excluir Tudo Definitivamente</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

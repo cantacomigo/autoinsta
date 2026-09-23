@@ -18,9 +18,10 @@ import {
 } from 'lucide-react';
 import { InstagramAccount, ProxyConfig, ActivityLog, GrowthDataPoint, ActionType } from '../types';
 import { LiveSimulator } from './LiveSimulator';
+import { Users, Trash2 } from 'lucide-react';
 
 interface DashboardViewProps {
-  account: InstagramAccount;
+  account?: InstagramAccount | null;
   proxy?: ProxyConfig;
   isRunning: boolean;
   onToggleRunning: () => void;
@@ -30,6 +31,7 @@ interface DashboardViewProps {
   onNavigateTab: (tab: string) => void;
   onOpenRealAutomationModal?: () => void;
   onOpenEditAccountModal?: () => void;
+  onClearLogs?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -43,10 +45,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateTab,
   onOpenRealAutomationModal,
   onOpenEditAccountModal,
+  onClearLogs,
 }) => {
   const [logFilter, setLogFilter] = useState<string>('all');
   const [logSearch, setLogSearch] = useState<string>('');
   const [chartMode, setChartMode] = useState<'followers' | 'actions'>('followers');
+
+  if (!account) {
+    return (
+      <div className="rounded-2xl border border-neutral-800 bg-neutral-900/40 p-12 text-center max-w-xl mx-auto my-12">
+        <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-4">
+          <Users className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Nenhuma Conta Cadastrada</h2>
+        <p className="text-sm text-neutral-400 mb-6">
+          Você excluiu todas as contas ou ainda não cadastrou o seu perfil. Adicione uma conta do Instagram para iniciar as automações.
+        </p>
+        <button
+          onClick={() => onNavigateTab('accounts')}
+          className="px-6 py-2.5 rounded-lg bg-rose-500 hover:bg-rose-400 text-white font-medium text-sm transition-colors cursor-pointer"
+        >
+          + Cadastrar Conta do Instagram
+        </button>
+      </div>
+    );
+  }
 
   const filteredLogs = logs.filter((log) => {
     if (logFilter !== 'all' && log.actionType !== logFilter) return false;
@@ -362,6 +385,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {onClearLogs && logs.length > 0 && (
+              <button
+                onClick={onClearLogs}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-neutral-800 hover:bg-rose-950/40 hover:text-rose-300 border border-transparent hover:border-rose-800/40 text-xs font-medium text-neutral-400 transition-colors cursor-pointer"
+                title="Limpar histórico de logs permanentemente"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Limpar Logs</span>
+              </button>
+            )}
             <button
               onClick={exportLogsCsv}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-neutral-800 hover:bg-neutral-750 text-xs font-medium text-neutral-200 transition-colors"

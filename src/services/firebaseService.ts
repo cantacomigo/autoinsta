@@ -97,5 +97,62 @@ export const firebaseService = {
     } catch (err) {
       console.warn('Error saving configs to Firestore:', err);
     }
+  },
+
+  // Load automation & targeting configs
+  async loadConfig(userId: string, accountId: string): Promise<{ targeting?: TargetingConfig; automation?: AutomationConfig } | null> {
+    try {
+      const colRef = collection(db, 'users', userId, 'accounts', accountId, 'config');
+      const snap = await getDocs(colRef);
+      if (snap.empty) return null;
+      const settingsDoc = snap.docs.find(d => d.id === 'settings');
+      return settingsDoc ? settingsDoc.data() as { targeting?: TargetingConfig; automation?: AutomationConfig } : null;
+    } catch (err) {
+      console.warn('Error loading configs from Firestore:', err);
+      return null;
+    }
+  },
+
+  // Check if user has initialized their database
+  async isUserInitialized(userId: string): Promise<boolean> {
+    try {
+      const userRef = doc(db, 'users', userId);
+      const snap = await getDocs(collection(db, 'users', userId, 'meta'));
+      return !snap.empty;
+    } catch (err) {
+      return false;
+    }
+  },
+
+  // Mark user as initialized so we never re-seed mock data if they delete everything
+  async setUserInitialized(userId: string): Promise<void> {
+    try {
+      const metaRef = doc(db, 'users', userId, 'meta', 'status');
+      await setDoc(metaRef, { initialized: true, updatedAt: new Date().toISOString() }, { merge: true });
+    } catch (err) {
+      console.warn('Error setting user init meta:', err);
+    }
+  },
+
+  // Wipe all user data in Firestore
+  async clearAllUserData(userId: string): Promise<void> {
+    try {
+      const accountsSnap = await getDocs(collection(db, 'users', userId, 'accounts'));
+      for (const d of accountsSnap.docs) {
+        await deleteDoc(d.ref);
+      }
+      const proxiesSnap = await getDocs(collection(db, 'users', userId, 'proxies'));
+      for (const d of proxiesSnap.docs) {
+        await deleteDoc(d.ref);
+      }
+      const logsSnap = await getDocs(collection(db, 'users', userId, 'logs'));
+      for (const d of logsSnap.docs) {
+        await deleteDoc(d.ref);
+      }
+      // Keep initialized meta so it won't re-seed
+      await this.setUserInitialized(userId);
+    } catch (err) {
+      console.warn('Error clearing user data:', err);
+    }
   }
 };

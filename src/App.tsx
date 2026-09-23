@@ -15,11 +15,6 @@ import { AiAssistantModal } from './components/AiAssistantModal';
 import { RealAutomationModal } from './components/RealAutomationModal';
 import { EditAccountModal } from './components/EditAccountModal';
 import { 
-  initialAccounts, 
-  initialProxies, 
-  defaultTargeting, 
-  defaultAutomation, 
-  initialLogs, 
   growthHistory 
 } from './data/mockData';
 import { 
@@ -34,19 +29,48 @@ import {
 import { parseSpintax } from './utils/spintax';
 import { initAuth, testFirestoreConnection, auth, googleProvider } from './firebase';
 import { firebaseService } from './services/firebaseService';
+import { storageService } from './services/storageService';
 import { User, signInWithPopup } from 'firebase/auth';
 
 export default function App() {
+  // Load persistent state from localStorage immediately on first render
+  const initialData = storageService.getInitialState();
+
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
-  const [accounts, setAccounts] = useState<InstagramAccount[]>(initialAccounts);
-  const [selectedAccountId, setSelectedAccountId] = useState<string>(initialAccounts[0].id);
-  const [proxies, setProxies] = useState<ProxyConfig[]>(initialProxies);
-  const [targeting, setTargeting] = useState<TargetingConfig>(defaultTargeting);
-  const [automation, setAutomation] = useState<AutomationConfig>(defaultAutomation);
-  const [logs, setLogs] = useState<ActivityLog[]>(initialLogs);
+  const [accounts, setAccounts] = useState<InstagramAccount[]>(initialData.accounts);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(initialData.selectedAccountId);
+  const [proxies, setProxies] = useState<ProxyConfig[]>(initialData.proxies);
+  const [targeting, setTargeting] = useState<TargetingConfig>(initialData.targeting);
+  const [automation, setAutomation] = useState<AutomationConfig>(initialData.automation);
+  const [logs, setLogs] = useState<ActivityLog[]>(initialData.logs);
   const [growthData, setGrowthData] = useState<GrowthDataPoint[]>(growthHistory);
-  const [isAutomationRunning, setIsAutomationRunning] = useState<boolean>(true);
+  const [isAutomationRunning, setIsAutomationRunning] = useState<boolean>(initialData.accounts.length > 0);
+
+  // Sync state changes to persistent localStorage immediately so refreshing NEVER reverts deletions
+  useEffect(() => {
+    storageService.saveAccounts(accounts);
+  }, [accounts]);
+
+  useEffect(() => {
+    storageService.saveProxies(proxies);
+  }, [proxies]);
+
+  useEffect(() => {
+    storageService.saveTargeting(targeting);
+  }, [targeting]);
+
+  useEffect(() => {
+    storageService.saveAutomation(automation);
+  }, [automation]);
+
+  useEffect(() => {
+    storageService.saveLogs(logs);
+  }, [logs]);
+
+  useEffect(() => {
+    storageService.saveSelectedAccountId(selectedAccountId);
+  }, [selectedAccountId]);
 
   // AI Assistant Modal
   const [aiModalOpen, setAiModalOpen] = useState<boolean>(false);
@@ -103,6 +127,7 @@ export default function App() {
 
   // Connect Real Instagram Session
   const handleConnectRealSession = async (sessionId: string, csrfToken: string): Promise<boolean> => {
+    if (!selectedAccount) return false;
     try {
       const res = await fetch('/api/instagram/verify-session', {
         method: 'POST',
@@ -154,24 +179,33 @@ export default function App() {
 
     const loadUserData = async () => {
       try {
+        const isInit = await firebaseService.isUserInitialized(currentUser.uid);
         const storedAccounts = await firebaseService.loadAccounts(currentUser.uid);
         const storedProxies = await firebaseService.loadProxies(currentUser.uid);
 
-        if (storedAccounts.length > 0) {
+        if (isInit) {
+          // User already customized their database. Respect Firestore state even if empty!
           setAccounts(storedAccounts);
-          setSelectedAccountId(storedAccounts[0].id);
+          setProxies(storedProxies);
+          if (storedAccounts.length > 0) {
+            setSelectedAccountId((curr) => {
+              const exists = storedAccounts.some((a) => a.id === curr);
+              return exists ? curr : storedAccounts[0].id;
+            });
+            const activeAccId = storedAccounts[0].id;
+            const config = await firebaseService.loadConfig(currentUser.uid, activeAccId);
+            if (config?.targeting) setTargeting(config.targeting);
+            if (config?.automation) setAutomation(config.automation);
+          } else {
+            setSelectedAccountId(null);
+          }
         } else {
-          // Seed user's Firestore with initial accounts
-          for (const acc of initialAccounts) {
+          // Brand new user in Firestore: seed once and mark initialized
+          await firebaseService.setUserInitialized(currentUser.uid);
+          for (const acc of accounts) {
             await firebaseService.saveAccount(currentUser.uid, acc);
           }
-        }
-
-        if (storedProxies.length > 0) {
-          setProxies(storedProxies);
-        } else {
-          // Seed user's Firestore with initial proxies
-          for (const prx of initialProxies) {
+          for (const prx of proxies) {
             await firebaseService.saveProxy(currentUser.uid, prx);
           }
         }
@@ -183,7 +217,8 @@ export default function App() {
     loadUserData();
   }, [currentUser]);
 
-  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) || accounts[0];
+  const selectedAccount: InstagramAccount | null = 
+    accounts.find((a) => a.id === selectedAccountId) || accounts[0] || null;
   const assignedProxy = proxies.find((p) => p.id === selectedAccount?.proxyId);
 
   // Google Sign In
@@ -206,7 +241,7 @@ export default function App() {
     setSelectedAccountId(account.id);
   };
 
-  // Update active account and persist to Firestore
+  // Update active account and persist to Firestore + localStorage
   const handleUpdateAccount = (updated: InstagramAccount) => {
     setAccounts((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
     if (currentUser) {
@@ -214,16 +249,16 @@ export default function App() {
     }
   };
 
-  // Add new account and persist to Firestore
+  // Add new account and persist
   const handleAddAccount = (newAcc: Partial<InstagramAccount>) => {
     const acc: InstagramAccount = {
       id: `acc_${Date.now()}`,
       username: newAcc.username || 'novo_perfil',
       displayName: newAcc.displayName || 'Novo Perfil',
       avatar: newAcc.avatar || '/src/assets/images/avatar_instagram_creator_1790187939833.jpg',
-      followers: newAcc.followers || 1200,
-      following: newAcc.following || 350,
-      postsCount: newAcc.postsCount || 10,
+      followers: newAcc.followers || 0,
+      following: newAcc.following || 0,
+      postsCount: newAcc.postsCount || 0,
       status: newAcc.status || 'warming_up',
       warmUpDay: newAcc.warmUpDay || 1,
       warmUpTotalDays: newAcc.warmUpTotalDays || 7,
@@ -243,20 +278,22 @@ export default function App() {
     }
   };
 
-  // Remove account and delete from Firestore
+  // Remove account and delete from Firestore & localStorage
   const handleRemoveAccount = (id: string) => {
-    setAccounts((prev) => prev.filter((a) => a.id !== id));
-    if (selectedAccountId === id) {
-      const remaining = accounts.filter((a) => a.id !== id);
-      if (remaining.length > 0) setSelectedAccountId(remaining[0].id);
-    }
+    setAccounts((prev) => {
+      const remaining = prev.filter((a) => a.id !== id);
+      if (selectedAccountId === id) {
+        setSelectedAccountId(remaining.length > 0 ? remaining[0].id : null);
+      }
+      return remaining;
+    });
 
     if (currentUser) {
       firebaseService.deleteAccount(currentUser.uid, id);
     }
   };
 
-  // Add proxy and persist to Firestore
+  // Add proxy and persist
   const handleAddProxy = (newPrx: Partial<ProxyConfig>) => {
     const prx: ProxyConfig = {
       id: `prx_${Date.now()}`,
@@ -331,6 +368,48 @@ export default function App() {
     });
   };
 
+  // Wipe All Data: Clean slate permanently
+  const handleWipeAllData = async () => {
+    const emptyState = storageService.wipeAllData();
+    setAccounts(emptyState.accounts);
+    setProxies(emptyState.proxies);
+    setTargeting(emptyState.targeting);
+    setAutomation(emptyState.automation);
+    setLogs(emptyState.logs);
+    setSelectedAccountId(emptyState.selectedAccountId);
+    setIsAutomationRunning(false);
+
+    if (currentUser) {
+      await firebaseService.clearAllUserData(currentUser.uid);
+    }
+  };
+
+  // Restore Defaults
+  const handleRestoreDefaults = async () => {
+    const defaultState = storageService.restoreDefaults();
+    setAccounts(defaultState.accounts);
+    setProxies(defaultState.proxies);
+    setTargeting(defaultState.targeting);
+    setAutomation(defaultState.automation);
+    setLogs(defaultState.logs);
+    setSelectedAccountId(defaultState.selectedAccountId);
+
+    if (currentUser) {
+      for (const acc of defaultState.accounts) {
+        await firebaseService.saveAccount(currentUser.uid, acc);
+      }
+      for (const prx of defaultState.proxies) {
+        await firebaseService.saveProxy(currentUser.uid, prx);
+      }
+    }
+  };
+
+  // Clear Logs
+  const handleClearLogs = () => {
+    setLogs([]);
+    storageService.saveLogs([]);
+  };
+
   // Execute action (Real Instagram action dispatch with anti-ban protections)
   const executeManualAction = useCallback(async () => {
     if (!selectedAccount) return;
@@ -368,7 +447,7 @@ export default function App() {
           detail = `[AÇÃO REAL INSTAGRAM] ${result.message || `Executado ${selectedAction} em ${targetUser}`}`;
         } else {
           logStatus = 'warning';
-          detail = `[AVISO INSTAGRAM] ${result.error || 'Ação necessita de verificação no Instagram'}`;
+          detail = `[AVISO INSTAGRAM] ${result.error || 'Ação suspensa temporariamente para proteção anti-bloqueio'}`;
         }
       } catch (err: any) {
         logStatus = 'warning';
@@ -382,7 +461,7 @@ export default function App() {
       } else if (selectedAction === 'comment') {
         const template = automation.commentsSpintax[0] || 'Sensacional esse post, @{username}! 👏';
         const cleanUser = targetUser.replace('@', '');
-        const parsed = parseSpintax(template, { username: cleanUser });
+        const parsed = parseSpintax(template, { username: cleanUser, primeiro_nome: cleanUser });
         detail = `Comentou: "${parsed}"`;
       } else if (selectedAction === 'follow') {
         const comp = targeting.competitorAccounts[0] || '@concorrente';
@@ -497,6 +576,7 @@ export default function App() {
         currentUser={currentUser}
         onGoogleSignIn={handleGoogleSignIn}
         onOpenRealAutomationModal={() => setRealAutomationModalOpen(true)}
+        onWipeAllData={handleWipeAllData}
       />
 
       {/* Main Content Viewport */}
@@ -506,7 +586,7 @@ export default function App() {
         <div className="flex items-center gap-2 text-xs text-neutral-500 mb-5 font-mono">
           <span>AutoInsta</span>
           <span>/</span>
-          <span>@{selectedAccount?.username}</span>
+          <span>{selectedAccount ? `@${selectedAccount.username}` : 'Sem Conta'}</span>
           <span>/</span>
           <span className="text-neutral-300 capitalize">
             {currentTab === 'dashboard' && 'Painel Geral'}
@@ -531,9 +611,12 @@ export default function App() {
             onNavigateTab={setCurrentTab}
             onOpenRealAutomationModal={() => setRealAutomationModalOpen(true)}
             onOpenEditAccountModal={() => {
-              setAccountToEdit(selectedAccount);
-              setEditAccountModalOpen(true);
+              if (selectedAccount) {
+                setAccountToEdit(selectedAccount);
+                setEditAccountModalOpen(true);
+              }
             }}
+            onClearLogs={handleClearLogs}
           />
         )}
 
@@ -562,10 +645,22 @@ export default function App() {
         )}
 
         {currentTab === 'warmup' && (
-          <WarmUpSecurityView
-            account={selectedAccount}
-            onUpdateAccount={handleUpdateAccount}
-          />
+          selectedAccount ? (
+            <WarmUpSecurityView
+              account={selectedAccount}
+              onUpdateAccount={handleUpdateAccount}
+            />
+          ) : (
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-8 text-center text-neutral-400">
+              <p className="text-sm">Nenhuma conta selecionada para configurar aquecimento.</p>
+              <button
+                onClick={() => setCurrentTab('accounts')}
+                className="mt-3 px-4 py-2 text-xs font-semibold rounded-lg bg-rose-500 hover:bg-rose-400 text-white cursor-pointer"
+              >
+                + Ir para Contas & Proxies
+              </button>
+            </div>
+          )
         )}
 
         {currentTab === 'accounts' && (
@@ -584,6 +679,8 @@ export default function App() {
               setAccountToEdit(acc);
               setEditAccountModalOpen(true);
             }}
+            onWipeAllData={handleWipeAllData}
+            onRestoreDefaults={handleRestoreDefaults}
           />
         )}
       </main>
@@ -599,13 +696,15 @@ export default function App() {
       />
 
       {/* Real Automation Modal */}
-      <RealAutomationModal
-        isOpen={realAutomationModalOpen}
-        onClose={() => setRealAutomationModalOpen(false)}
-        account={selectedAccount}
-        targeting={targeting}
-        onConnectRealSession={handleConnectRealSession}
-      />
+      {selectedAccount && (
+        <RealAutomationModal
+          isOpen={realAutomationModalOpen}
+          onClose={() => setRealAutomationModalOpen(false)}
+          account={selectedAccount}
+          targeting={targeting}
+          onConnectRealSession={handleConnectRealSession}
+        />
+      )}
 
       {/* Edit Real Account Details Modal */}
       {editAccountModalOpen && accountToEdit && (
@@ -622,7 +721,7 @@ export default function App() {
         <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>AutoInsta © 2026 · Sistema Inteligente de Automação e Crescimento Seguro</span>
           <div className="flex items-center gap-4 text-neutral-400">
-            <span>Sincronização em Nuvem Firestore</span>
+            <span>Sincronização em Nuvem Firestore & LocalStorage</span>
             <span>·</span>
             <span>Proteção Anti-Ban Ativa</span>
           </div>

@@ -18,7 +18,7 @@ interface NavbarProps {
   currentTab: string;
   onSelectTab: (tab: string) => void;
   accounts: InstagramAccount[];
-  selectedAccount: InstagramAccount;
+  selectedAccount?: InstagramAccount | null;
   onSelectAccount: (account: InstagramAccount) => void;
   isAutomationRunning: boolean;
   onToggleAutomation: () => void;
@@ -26,6 +26,7 @@ interface NavbarProps {
   currentUser: User | null;
   onGoogleSignIn: () => void;
   onOpenRealAutomationModal?: () => void;
+  onWipeAllData?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -40,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onGoogleSignIn,
   onOpenRealAutomationModal,
+  onWipeAllData,
 }) => {
   const [accountDropdownOpen, setAccountDropdownOpen] = React.useState(false);
 
@@ -130,19 +132,29 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Account Selector Dropdown */}
           <div className="relative">
-            <button
-              onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-              className="flex items-center gap-2 py-1.5 pl-2 pr-2.5 text-xs font-medium text-neutral-300 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 rounded-md transition-colors"
-            >
-              <img
-                src={selectedAccount.avatar}
-                alt={selectedAccount.username}
-                referrerPolicy="no-referrer"
-                className="w-5 h-5 rounded-full object-cover border border-neutral-700"
-              />
-              <span className="max-w-[110px] truncate text-white">@{selectedAccount.username}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
-            </button>
+            {selectedAccount ? (
+              <button
+                onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+                className="flex items-center gap-2 py-1.5 pl-2 pr-2.5 text-xs font-medium text-neutral-300 bg-neutral-900 hover:bg-neutral-850 border border-neutral-800 rounded-md transition-colors"
+              >
+                <img
+                  src={selectedAccount.avatar}
+                  alt={selectedAccount.username}
+                  referrerPolicy="no-referrer"
+                  className="w-5 h-5 rounded-full object-cover border border-neutral-700"
+                />
+                <span className="max-w-[110px] truncate text-white">@{selectedAccount.username}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
+              </button>
+            ) : (
+              <button
+                onClick={() => onSelectTab('accounts')}
+                className="flex items-center gap-1.5 py-1.5 px-3 text-xs font-medium text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-md transition-colors"
+              >
+                <UserIcon className="w-3.5 h-3.5" />
+                <span>+ Adicionar Conta</span>
+              </button>
+            )}
 
             {accountDropdownOpen && (
               <div 
@@ -150,40 +162,58 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => setAccountDropdownOpen(false)}
               >
                 <div className="px-3 py-2 border-b border-neutral-800 text-xs text-neutral-400 font-medium">
-                  Contas no Firebase ({accounts.length})
+                  Contas Salvas ({accounts.length})
                 </div>
-                {accounts.map((acc) => (
-                  <button
-                    key={acc.id}
-                    onClick={() => onSelectAccount(acc)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-neutral-800 ${
-                      acc.id === selectedAccount.id ? 'bg-neutral-800/80 text-white font-medium' : 'text-neutral-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={acc.avatar}
-                        alt={acc.username}
-                        referrerPolicy="no-referrer"
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                      <div className="truncate">
-                        <p className="truncate text-white">@{acc.username}</p>
-                        <p className="text-[10px] text-neutral-400">{acc.followers.toLocaleString()} seguidores</p>
+                {accounts.length === 0 ? (
+                  <div className="px-3 py-4 text-center text-xs text-neutral-500">
+                    Nenhuma conta cadastrada
+                  </div>
+                ) : (
+                  accounts.map((acc) => (
+                    <button
+                      key={acc.id}
+                      onClick={() => onSelectAccount(acc)}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-neutral-800 ${
+                        selectedAccount && acc.id === selectedAccount.id ? 'bg-neutral-800/80 text-white font-medium' : 'text-neutral-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={acc.avatar}
+                          alt={acc.username}
+                          referrerPolicy="no-referrer"
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                        <div className="truncate">
+                          <p className="truncate text-white">@{acc.username}</p>
+                          <p className="text-[10px] text-neutral-400">{acc.followers.toLocaleString()} seguidores</p>
+                        </div>
                       </div>
-                    </div>
-                    {acc.id === selectedAccount.id && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    )}
-                  </button>
-                ))}
-                <div className="p-1 border-t border-neutral-800">
+                      {selectedAccount && acc.id === selectedAccount.id && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                      )}
+                    </button>
+                  ))
+                )}
+                <div className="p-1 border-t border-neutral-800 flex flex-col gap-1">
                   <button
                     onClick={() => onSelectTab('accounts')}
-                    className="w-full text-center py-1.5 text-xs text-neutral-400 hover:text-white rounded hover:bg-neutral-800/60 transition-colors"
+                    className="w-full text-center py-1.5 text-xs text-neutral-300 hover:text-white rounded hover:bg-neutral-800/60 transition-colors"
                   >
-                    + Gerenciar todas as contas
+                    + Gerenciar Contas & Proxies
                   </button>
+                  {onWipeAllData && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAccountDropdownOpen(false);
+                        onWipeAllData();
+                      }}
+                      className="w-full text-center py-1.5 text-[11px] text-rose-400 hover:text-rose-300 rounded hover:bg-rose-500/10 transition-colors"
+                    >
+                      ⚠️ Limpar/Zerar Todos os Dados
+                    </button>
+                  )}
                 </div>
               </div>
             )}
