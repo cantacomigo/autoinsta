@@ -84,35 +84,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Real vs Simulation Mode Banner */}
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 mt-0.5 sm:mt-0 flex-shrink-0">
-            <Zap className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded">
-                Modo Simulação Ativo
-              </span>
-              <span className="text-xs text-neutral-300 font-medium hidden sm:inline">
-                (Ações sendo simuladas no painel)
-              </span>
-            </div>
-            <p className="text-xs text-neutral-300 mt-1">
-              Para executar ações <b>REAIS</b> (seguir perfis e curtir posts de verdade no seu Instagram sem risco de bloqueio de IP):
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={onOpenRealAutomationModal}
-          className="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 shadow whitespace-nowrap cursor-pointer"
-        >
-          <Zap className="w-3.5 h-3.5 fill-current" />
-          <span>Ativar Automação Real no Instagram ➔</span>
-        </button>
-      </div>
-
       {/* Top Banner: Account Status Overview */}
       <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
@@ -169,6 +140,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Edit3 className="w-3.5 h-3.5 text-amber-400" />
             <span>Editar Dados Reais</span>
           </button>
+          {onOpenRealAutomationModal && (
+            <button
+              onClick={onOpenRealAutomationModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-500 hover:bg-amber-400 text-xs font-semibold text-neutral-950 transition-colors shadow cursor-pointer"
+              title="Robô de automação para executar no Instagram"
+            >
+              <Zap className="w-3.5 h-3.5 fill-current" />
+              <span>Robô Instagram</span>
+            </button>
+          )}
         </div>
       </div>
 

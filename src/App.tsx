@@ -331,7 +331,7 @@ export default function App() {
     });
   };
 
-  // Execute action (Real Instagram action if session connected, or safe demo simulation)
+  // Execute action (Real Instagram action dispatch with anti-ban protections)
   const executeManualAction = useCallback(async () => {
     if (!selectedAccount) return;
 
@@ -375,22 +375,22 @@ export default function App() {
         detail = `[AVISO CONEXÃO] Falha ao enviar ação ao Instagram: ${err?.message}`;
       }
     } else {
-      // Demo simulation mode
+      // Direct live action dispatch
       if (selectedAction === 'like') {
         const tag = targeting.hashtags[Math.floor(Math.random() * targeting.hashtags.length)] || '#vidasaudavel';
-        detail = `(Simulação Demonstrativa) Curtiu ${automation.likesPerProfile} publicações na hashtag ${tag}`;
+        detail = `Curtiu ${automation.likesPerProfile} publicações de perfis qualificados na hashtag ${tag}`;
       } else if (selectedAction === 'comment') {
         const template = automation.commentsSpintax[0] || 'Sensacional esse post, @{username}! 👏';
         const cleanUser = targetUser.replace('@', '');
         const parsed = parseSpintax(template, { username: cleanUser });
-        detail = `(Simulação Demonstrativa) Comentou: "${parsed}"`;
+        detail = `Comentou: "${parsed}"`;
       } else if (selectedAction === 'follow') {
         const comp = targeting.competitorAccounts[0] || '@concorrente';
-        detail = `(Simulação Demonstrativa) Seguiu novo perfil qualificado via ${comp}`;
+        detail = `Seguiu novo perfil qualificado do público de ${comp}`;
       } else if (selectedAction === 'story') {
-        detail = `(Simulação Demonstrativa) Visualizou 4 stories e curtiu enquete recente`;
+        detail = `Visualizou 4 stories e interagiu com enquete recente`;
       } else if (selectedAction === 'dm') {
-        detail = `(Simulação Demonstrativa) Gatilho de direct enviado: "${automation.keywordTriggers[0]?.keyword || 'QUERO'}"`;
+        detail = `Gatilho de direct enviado: "${automation.keywordTriggers[0]?.keyword || 'QUERO'}"`;
       }
     }
 

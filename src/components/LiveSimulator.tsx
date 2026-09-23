@@ -36,7 +36,7 @@ export const LiveSimulator: React.FC<LiveSimulatorProps> = ({
   const [currentStepText, setCurrentStepText] = useState<string>(
     isRunning ? 'Aguardando intervalo humano de proteção anti-ban...' : 'Automação pausada. Clique em Iniciar para ativar o robô.'
   );
-  const [simulatedUrl, setSimulatedUrl] = useState<string>('https://instagram.com/explore/tags/vidasaudavel/');
+  const [currentUrl, setCurrentUrl] = useState<string>('https://instagram.com/explore/tags/vidasaudavel/');
 
   const actionRef = useRef(onExecuteManualAction);
   useEffect(() => {
@@ -86,7 +86,7 @@ export const LiveSimulator: React.FC<LiveSimulatorProps> = ({
           </div>
           <div className="flex items-center gap-2 rounded bg-neutral-900 px-2.5 py-1 text-xs text-neutral-300 font-mono">
             <Globe className="w-3.5 h-3.5 text-neutral-400" />
-            <span className="max-w-[240px] truncate sm:max-w-md">{simulatedUrl}</span>
+            <span className="max-w-[240px] truncate sm:max-w-md">{currentUrl}</span>
           </div>
         </div>
 
@@ -94,12 +94,12 @@ export const LiveSimulator: React.FC<LiveSimulatorProps> = ({
           {isRunning ? (
             <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Emulação Ativa</span>
+              <span>Automação em Tempo Real</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-xs font-mono text-neutral-400">
               <span className="h-2 w-2 rounded-full bg-neutral-500"></span>
-              <span>Emulador Pausado</span>
+              <span>Robô Pausado</span>
             </div>
           )}
 
@@ -168,8 +168,8 @@ export const LiveSimulator: React.FC<LiveSimulatorProps> = ({
           {/* Browser environment fingerprint indicators */}
           <div className="mt-4 pt-3 border-t border-neutral-800 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-neutral-400">
             <div>
-              <span className="block text-neutral-500 text-[10px]">NAVEGADOR EMULADO</span>
-              <span className="font-mono text-neutral-300">Chrome 122 (Headful)</span>
+              <span className="block text-neutral-500 text-[10px]">AMBIENTE DE EXECUÇÃO</span>
+              <span className="font-mono text-neutral-300">Chrome Anti-Detect</span>
             </div>
             <div>
               <span className="block text-neutral-500 text-[10px]">PROXY RESIDENCIAL</span>

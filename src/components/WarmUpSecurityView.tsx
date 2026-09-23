@@ -83,7 +83,7 @@ export const WarmUpSecurityView: React.FC<WarmUpSecurityViewProps> = ({
         <div>
           <h2 className="text-base font-semibold text-white">Central de Segurança, Anti-Ban e Aquecimento de Contas</h2>
           <p className="text-xs text-neutral-400 mt-0.5">
-            Sistemas patenteados para operar simulando comportamento 100% humano no Instagram
+            Sistemas patenteados para operar com comportamento 100% humano no Instagram
           </p>
         </div>
 
@@ -239,7 +239,7 @@ export const WarmUpSecurityView: React.FC<WarmUpSecurityViewProps> = ({
             Horário Ativo de Operação (Descanso Noturno)
           </div>
           <p className="text-xs text-neutral-400">
-            O robô suspende automaticamente as ações durante a madrugada para simular a rotina humana.
+            O robô suspende automaticamente as ações durante a madrugada para respeitar a rotina humana.
           </p>
 
           <div className="grid grid-cols-2 gap-3 pt-2">

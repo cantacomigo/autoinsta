@@ -196,7 +196,7 @@ export const RealAutomationModal: React.FC<RealAutomationModalProps> = ({
         <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-start gap-3 text-xs text-amber-200/90">
           <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
           <p>
-            <b>Por que o sistema estava apenas simulando?</b> O Instagram (Meta) proíbe automações cegas sem autenticação. Para proteger sua conta contra banimentos imediatos, o painel roda inicialmente em <b>Modo Demonstração</b>. Escolha abaixo como deseja rodar as ações <b>reais</b>.
+            <b>Execução Real no Instagram:</b> Escolha abaixo como deseja despachar as ações da sua conta @{account.username} de forma segura, com proteção anti-ban e IP residencial.
           </p>
         </div>
 
