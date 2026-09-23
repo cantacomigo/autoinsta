@@ -13,7 +13,8 @@ import {
   Download,
   Flame,
   ArrowUpRight,
-  Zap
+  Zap,
+  Edit3
 } from 'lucide-react';
 import { InstagramAccount, ProxyConfig, ActivityLog, GrowthDataPoint, ActionType } from '../types';
 import { LiveSimulator } from './LiveSimulator';
@@ -28,6 +29,7 @@ interface DashboardViewProps {
   growthData: GrowthDataPoint[];
   onNavigateTab: (tab: string) => void;
   onOpenRealAutomationModal?: () => void;
+  onOpenEditAccountModal?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -40,6 +42,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   growthData,
   onNavigateTab,
   onOpenRealAutomationModal,
+  onOpenEditAccountModal,
 }) => {
   const [logFilter, setLogFilter] = useState<string>('all');
   const [logSearch, setLogSearch] = useState<string>('');
@@ -157,6 +160,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="px-3 py-1.5 rounded-md bg-neutral-800 hover:bg-neutral-700 text-xs font-medium text-white transition-colors"
           >
             Ajustar Segmentação
+          </button>
+          <button
+            onClick={onOpenEditAccountModal}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-semibold text-amber-300 transition-colors cursor-pointer"
+            title="Definir seguidores, seguindo e foto reais desta conta"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+            <span>Editar Dados Reais</span>
           </button>
         </div>
       </div>

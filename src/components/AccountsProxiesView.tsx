@@ -9,7 +9,8 @@ import {
   RefreshCw, 
   CheckCircle2, 
   AlertCircle,
-  Link2
+  Link2,
+  Edit3
 } from 'lucide-react';
 import { InstagramAccount, ProxyConfig } from '../types';
 
@@ -24,6 +25,7 @@ interface AccountsProxiesViewProps {
   onRemoveProxy: (id: string) => void;
   onTestProxy: (proxy: ProxyConfig) => Promise<void>;
   onAssignProxyToAccount: (accountId: string, proxyId: string) => void;
+  onEditAccount?: (acc: InstagramAccount) => void;
 }
 
 export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
@@ -37,6 +39,7 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
   onRemoveProxy,
   onTestProxy,
   onAssignProxyToAccount,
+  onEditAccount,
 }) => {
   // Modals state
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
@@ -46,6 +49,10 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
   // New Account form state
   const [newUsername, setNewUsername] = useState('');
   const [newDisplayName, setNewDisplayName] = useState('');
+  const [newFollowers, setNewFollowers] = useState<number | ''>('');
+  const [newFollowing, setNewFollowing] = useState<number | ''>('');
+  const [newPostsCount, setNewPostsCount] = useState<number | ''>('');
+  const [newAvatar, setNewAvatar] = useState('');
   const [selectedProxyForNewAcc, setSelectedProxyForNewAcc] = useState('');
 
   // New Proxy form state
@@ -63,10 +70,10 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
     onAddAccount({
       username: cleanUser,
       displayName: newDisplayName.trim() || `@${cleanUser}`,
-      avatar: '/src/assets/images/avatar_instagram_creator_1790187939833.jpg',
-      followers: 1200,
-      following: 340,
-      postsCount: 24,
+      avatar: newAvatar.trim() || '/src/assets/images/avatar_instagram_creator_1790187939833.jpg',
+      followers: newFollowers !== '' ? Number(newFollowers) : 0,
+      following: newFollowing !== '' ? Number(newFollowing) : 0,
+      postsCount: newPostsCount !== '' ? Number(newPostsCount) : 0,
       status: 'warming_up',
       warmUpDay: 1,
       warmUpTotalDays: 7,
@@ -81,6 +88,10 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
 
     setNewUsername('');
     setNewDisplayName('');
+    setNewFollowers('');
+    setNewFollowing('');
+    setNewPostsCount('');
+    setNewAvatar('');
     setShowAddAccountModal(false);
   };
 
@@ -196,15 +207,24 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
                     </div>
                   </div>
 
-                  {accounts.length > 1 && (
+                  <div className="flex items-center gap-1">
                     <button
-                      onClick={() => onRemoveAccount(acc.id)}
-                      className="text-neutral-500 hover:text-rose-400 p-1"
-                      title="Desconectar conta"
+                      onClick={() => onEditAccount && onEditAccount(acc)}
+                      className="text-neutral-400 hover:text-amber-400 p-1 rounded hover:bg-neutral-800 transition-colors"
+                      title="Editar dados reais desta conta"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Edit3 className="w-4 h-4" />
                     </button>
-                  )}
+                    {accounts.length > 1 && (
+                      <button
+                        onClick={() => onRemoveAccount(acc.id)}
+                        className="text-neutral-500 hover:text-rose-400 p-1 rounded hover:bg-neutral-800 transition-colors"
+                        title="Desconectar conta"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Account Details & Proxy Selection */}
@@ -364,6 +384,61 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
                   placeholder="ex: Fitness Store | Moda & Treino"
                   value={newDisplayName}
                   onChange={(e) => setNewDisplayName(e.target.value)}
+                  className="w-full rounded border border-neutral-800 bg-neutral-950 p-2 text-xs text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-neutral-300 font-medium block mb-1">
+                    Seguidores:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newFollowers}
+                    onChange={(e) => setNewFollowers(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full rounded border border-neutral-800 bg-neutral-950 p-2 text-xs text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-neutral-300 font-medium block mb-1">
+                    Seguindo:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newFollowing}
+                    onChange={(e) => setNewFollowing(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full rounded border border-neutral-800 bg-neutral-950 p-2 text-xs text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-neutral-300 font-medium block mb-1">
+                    Publicações:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newPostsCount}
+                    onChange={(e) => setNewPostsCount(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full rounded border border-neutral-800 bg-neutral-950 p-2 text-xs text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-neutral-300 font-medium block mb-1">
+                  URL da Foto de Perfil (Opcional):
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://... ou vazio para imagem padrão"
+                  value={newAvatar}
+                  onChange={(e) => setNewAvatar(e.target.value)}
                   className="w-full rounded border border-neutral-800 bg-neutral-950 p-2 text-xs text-white"
                 />
               </div>

@@ -241,6 +241,41 @@ app.post('/api/instagram/execute-action', async (req: Request, res: Response) =>
   }
 });
 
+// Cache for live data synced from the user's open Instagram tab
+let lastBrowserSync: any = null;
+
+app.post('/api/instagram/sync-from-browser', (req: Request, res: Response) => {
+  const { username, followers, following, postsCount, avatar, displayName, biography } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ error: 'Username é obrigatório' });
+  }
+
+  lastBrowserSync = {
+    username: username.replace(/^@/, '').trim(),
+    displayName: displayName || `@${username}`,
+    followers: Number(followers) || 0,
+    following: Number(following) || 0,
+    postsCount: Number(postsCount) || 0,
+    avatar: avatar || '',
+    biography: biography || '',
+    syncedAt: new Date().toISOString(),
+  };
+
+  res.json({
+    success: true,
+    data: lastBrowserSync,
+    message: 'Dados reais da conta sincronizados com sucesso!',
+  });
+});
+
+app.get('/api/instagram/last-sync', (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: lastBrowserSync,
+  });
+});
+
 // Initialize Gemini SDK with server-side API key
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
 let genAI: GoogleGenAI | null = null;

@@ -13,6 +13,7 @@ import { WarmUpSecurityView } from './components/WarmUpSecurityView';
 import { AccountsProxiesView } from './components/AccountsProxiesView';
 import { AiAssistantModal } from './components/AiAssistantModal';
 import { RealAutomationModal } from './components/RealAutomationModal';
+import { EditAccountModal } from './components/EditAccountModal';
 import { 
   initialAccounts, 
   initialProxies, 
@@ -53,6 +54,52 @@ export default function App() {
 
   // Real Automation Modal
   const [realAutomationModalOpen, setRealAutomationModalOpen] = useState<boolean>(false);
+
+  // Edit Account Modal
+  const [editAccountModalOpen, setEditAccountModalOpen] = useState<boolean>(false);
+  const [accountToEdit, setAccountToEdit] = useState<InstagramAccount | null>(null);
+
+  // Live polling for browser-sync data from the user's active Instagram tab
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/instagram/last-sync');
+        const data = await res.json();
+        if (data?.success && data?.data?.syncedAt) {
+          const sync = data.data;
+          setAccounts((prev) => {
+            const target = prev.find(
+              (a) => a.username.toLowerCase() === sync.username.toLowerCase()
+            );
+            if (
+              target &&
+              (target.followers !== sync.followers ||
+                target.following !== sync.following ||
+                (sync.avatar && target.avatar !== sync.avatar))
+            ) {
+              const updated: InstagramAccount = {
+                ...target,
+                followers: sync.followers,
+                following: sync.following,
+                postsCount: sync.postsCount || target.postsCount,
+                avatar: sync.avatar || target.avatar,
+                displayName: sync.displayName || target.displayName,
+                isRealAccount: true,
+              };
+              if (currentUser) {
+                firebaseService.saveAccount(currentUser.uid, updated);
+              }
+              return prev.map((a) => (a.id === target.id ? updated : a));
+            }
+            return prev;
+          });
+        }
+      } catch (e) {
+        // silent polling failure
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
 
   // Connect Real Instagram Session
   const handleConnectRealSession = async (sessionId: string, csrfToken: string): Promise<boolean> => {
@@ -300,7 +347,7 @@ export default function App() {
     const timestamp = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     let detail = '';
-    let logStatus: 'success' | 'warning' | 'error' = 'success';
+    let logStatus: 'success' | 'warning' = 'success';
 
     // If account has real Instagram credentials configured
     if (selectedAccount.isRealAccount && selectedAccount.sessionId) {
@@ -324,8 +371,8 @@ export default function App() {
           detail = `[AVISO INSTAGRAM] ${result.error || 'Ação necessita de verificação no Instagram'}`;
         }
       } catch (err: any) {
-        logStatus = 'error';
-        detail = `[ERRO CONEXÃO] Falha ao enviar ação ao Instagram: ${err?.message}`;
+        logStatus = 'warning';
+        detail = `[AVISO CONEXÃO] Falha ao enviar ação ao Instagram: ${err?.message}`;
       }
     } else {
       // Demo simulation mode
@@ -483,6 +530,10 @@ export default function App() {
             growthData={growthData}
             onNavigateTab={setCurrentTab}
             onOpenRealAutomationModal={() => setRealAutomationModalOpen(true)}
+            onOpenEditAccountModal={() => {
+              setAccountToEdit(selectedAccount);
+              setEditAccountModalOpen(true);
+            }}
           />
         )}
 
@@ -529,6 +580,10 @@ export default function App() {
             onRemoveProxy={handleRemoveProxy}
             onTestProxy={handleTestProxy}
             onAssignProxyToAccount={handleAssignProxyToAccount}
+            onEditAccount={(acc) => {
+              setAccountToEdit(acc);
+              setEditAccountModalOpen(true);
+            }}
           />
         )}
       </main>
@@ -551,6 +606,16 @@ export default function App() {
         targeting={targeting}
         onConnectRealSession={handleConnectRealSession}
       />
+
+      {/* Edit Real Account Details Modal */}
+      {editAccountModalOpen && accountToEdit && (
+        <EditAccountModal
+          isOpen={editAccountModalOpen}
+          onClose={() => setEditAccountModalOpen(false)}
+          account={accountToEdit}
+          onSaveAccount={handleUpdateAccount}
+        />
+      )}
 
       {/* Footer */}
       <footer className="border-t border-neutral-900 py-6 text-center text-xs text-neutral-500">
