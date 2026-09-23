@@ -9,7 +9,8 @@ import {
   Cloud,
   User as UserIcon,
   LogIn,
-  Download
+  Download,
+  Zap
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -24,6 +25,7 @@ interface NavbarProps {
   onOpenAiModal: () => void;
   currentUser: User | null;
   onGoogleSignIn: () => void;
+  onOpenRealAutomationModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -37,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAiModal,
   currentUser,
   onGoogleSignIn,
+  onOpenRealAutomationModal,
 }) => {
   const [accountDropdownOpen, setAccountDropdownOpen] = React.useState(false);
 
@@ -94,6 +97,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Zone 3: 1-2 primary actions */}
         <div className="flex items-center gap-3">
+          {/* Real Automation button */}
+          <button
+            onClick={onOpenRealAutomationModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-950 bg-amber-500 hover:bg-amber-400 rounded-md transition-colors whitespace-nowrap shadow cursor-pointer"
+            title="Ativar ações reais no seu Instagram"
+          >
+            <Zap className="w-3.5 h-3.5 fill-current" />
+            <span>Automação Real</span>
+          </button>
+
           {/* AI Strategy quick button */}
           <button
             onClick={onOpenAiModal}

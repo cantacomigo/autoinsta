@@ -12,6 +12,7 @@ import { DirectAutomationView } from './components/DirectAutomationView';
 import { WarmUpSecurityView } from './components/WarmUpSecurityView';
 import { AccountsProxiesView } from './components/AccountsProxiesView';
 import { AiAssistantModal } from './components/AiAssistantModal';
+import { RealAutomationModal } from './components/RealAutomationModal';
 import { 
   initialAccounts, 
   initialProxies, 
@@ -49,6 +50,47 @@ export default function App() {
   // AI Assistant Modal
   const [aiModalOpen, setAiModalOpen] = useState<boolean>(false);
   const [aiModalType, setAiModalType] = useState<string>('spintax_comments');
+
+  // Real Automation Modal
+  const [realAutomationModalOpen, setRealAutomationModalOpen] = useState<boolean>(false);
+
+  // Connect Real Instagram Session
+  const handleConnectRealSession = async (sessionId: string, csrfToken: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/instagram/verify-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: selectedAccount.username,
+          sessionId,
+          csrfToken,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.valid) {
+        const updatedAccount: InstagramAccount = {
+          ...selectedAccount,
+          isRealAccount: true,
+          connectionStatus: 'connected',
+          sessionId,
+          csrfToken,
+          followers: data.user?.followers || selectedAccount.followers,
+          following: data.user?.following || selectedAccount.following,
+          postsCount: data.user?.postsCount || selectedAccount.postsCount,
+          avatar: data.user?.profilePic || selectedAccount.avatar,
+        };
+        setAccounts((prev) => prev.map((a) => (a.id === selectedAccount.id ? updatedAccount : a)));
+        if (currentUser) {
+          firebaseService.saveAccount(currentUser.uid, updatedAccount);
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Session verify error:', err);
+      return false;
+    }
+  };
 
   // 1. Initialize Firebase connection and Auth on mount
   useEffect(() => {
@@ -242,43 +284,67 @@ export default function App() {
     });
   };
 
-  // Simulate an action execution in real-time and save log to Firestore
-  const executeManualAction = useCallback(() => {
+  // Execute action (Real Instagram action if session connected, or safe demo simulation)
+  const executeManualAction = useCallback(async () => {
     if (!selectedAccount) return;
 
     const possibleActions: ActionType[] = ['like', 'comment', 'follow', 'story', 'dm'];
     const selectedAction = possibleActions[Math.floor(Math.random() * possibleActions.length)];
 
-    const targetUsers = [
-      '@carol_fitness_nutri',
-      '@thiago.empreende',
-      '@biomedicina_estetica',
-      '@lucas.runner',
-      '@mariana_lifestyle_rio',
-      '@fernando_dropshipping',
-      '@rafaela.saudavel',
-    ];
+    const targetUsers = targeting.competitorAccounts.length > 0 
+      ? targeting.competitorAccounts 
+      : ['@carol_fitness_nutri', '@thiago.empreende', '@biomedicina_estetica', '@lucas.runner'];
     const targetUser = targetUsers[Math.floor(Math.random() * targetUsers.length)];
 
     const now = new Date();
     const timestamp = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     let detail = '';
-    if (selectedAction === 'like') {
-      const tag = targeting.hashtags[Math.floor(Math.random() * targeting.hashtags.length)] || '#vidasaudavel';
-      detail = `Curtiu ${automation.likesPerProfile} publicações recentes da hashtag ${tag}`;
-    } else if (selectedAction === 'comment') {
-      const template = automation.commentsSpintax[0] || 'Sensacional esse post, @{username}! 👏';
-      const cleanUser = targetUser.replace('@', '');
-      const parsed = parseSpintax(template, { username: cleanUser });
-      detail = `Comentou: "${parsed}"`;
-    } else if (selectedAction === 'follow') {
-      const comp = targeting.competitorAccounts[0] || '@concorrente';
-      detail = `Seguiu novo perfil (qualificado via filtros anti-bot, seguidor de ${comp})`;
-    } else if (selectedAction === 'story') {
-      detail = `Visualizou 4 stories e curtiu a enquete recente com sucesso`;
-    } else if (selectedAction === 'dm') {
-      detail = `Gatilho de direct enviado: "${automation.keywordTriggers[0]?.keyword || 'QUERO'}" com link de acesso`;
+    let logStatus: 'success' | 'warning' | 'error' = 'success';
+
+    // If account has real Instagram credentials configured
+    if (selectedAccount.isRealAccount && selectedAccount.sessionId) {
+      try {
+        const resp = await fetch('/api/instagram/execute-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            actionType: selectedAction,
+            target: targetUser,
+            sessionId: selectedAccount.sessionId,
+            csrfToken: selectedAccount.csrfToken,
+            accountUsername: selectedAccount.username,
+          }),
+        });
+        const result = await resp.json();
+        if (result.success) {
+          detail = `[AÇÃO REAL INSTAGRAM] ${result.message || `Executado ${selectedAction} em ${targetUser}`}`;
+        } else {
+          logStatus = 'warning';
+          detail = `[AVISO INSTAGRAM] ${result.error || 'Ação necessita de verificação no Instagram'}`;
+        }
+      } catch (err: any) {
+        logStatus = 'error';
+        detail = `[ERRO CONEXÃO] Falha ao enviar ação ao Instagram: ${err?.message}`;
+      }
+    } else {
+      // Demo simulation mode
+      if (selectedAction === 'like') {
+        const tag = targeting.hashtags[Math.floor(Math.random() * targeting.hashtags.length)] || '#vidasaudavel';
+        detail = `(Simulação Demonstrativa) Curtiu ${automation.likesPerProfile} publicações na hashtag ${tag}`;
+      } else if (selectedAction === 'comment') {
+        const template = automation.commentsSpintax[0] || 'Sensacional esse post, @{username}! 👏';
+        const cleanUser = targetUser.replace('@', '');
+        const parsed = parseSpintax(template, { username: cleanUser });
+        detail = `(Simulação Demonstrativa) Comentou: "${parsed}"`;
+      } else if (selectedAction === 'follow') {
+        const comp = targeting.competitorAccounts[0] || '@concorrente';
+        detail = `(Simulação Demonstrativa) Seguiu novo perfil qualificado via ${comp}`;
+      } else if (selectedAction === 'story') {
+        detail = `(Simulação Demonstrativa) Visualizou 4 stories e curtiu enquete recente`;
+      } else if (selectedAction === 'dm') {
+        detail = `(Simulação Demonstrativa) Gatilho de direct enviado: "${automation.keywordTriggers[0]?.keyword || 'QUERO'}"`;
+      }
     }
 
     const newLog: ActivityLog = {
@@ -287,7 +353,7 @@ export default function App() {
       actionType: selectedAction,
       targetUser,
       detail,
-      status: 'success',
+      status: logStatus,
       targetPostThumbnail: '/src/assets/images/post_lifestyle_fashion_1790187950485.jpg',
     };
 
@@ -383,6 +449,7 @@ export default function App() {
         onOpenAiModal={() => openAiWithPrompt('spintax_comments')}
         currentUser={currentUser}
         onGoogleSignIn={handleGoogleSignIn}
+        onOpenRealAutomationModal={() => setRealAutomationModalOpen(true)}
       />
 
       {/* Main Content Viewport */}
@@ -415,6 +482,7 @@ export default function App() {
             logs={logs}
             growthData={growthData}
             onNavigateTab={setCurrentTab}
+            onOpenRealAutomationModal={() => setRealAutomationModalOpen(true)}
           />
         )}
 
@@ -473,6 +541,15 @@ export default function App() {
         accountNiche={selectedAccount?.displayName}
         onApplySpintax={handleApplySpintaxFromAi}
         onApplyWelcomeDm={handleApplyWelcomeDmFromAi}
+      />
+
+      {/* Real Automation Modal */}
+      <RealAutomationModal
+        isOpen={realAutomationModalOpen}
+        onClose={() => setRealAutomationModalOpen(false)}
+        account={selectedAccount}
+        targeting={targeting}
+        onConnectRealSession={handleConnectRealSession}
       />
 
       {/* Footer */}

@@ -31,6 +31,13 @@ export interface InstagramAccount {
   activeHours: { start: string; end: string };
   delayRange: [number, number]; // seconds
   lastActive: string;
+  // Real Instagram Connection
+  isRealAccount?: boolean;
+  sessionId?: string;
+  csrfToken?: string;
+  igUserId?: string;
+  connectionStatus?: 'connected' | 'disconnected' | 'invalid_session' | 'demo';
+  connectionError?: string;
 }
 
 export interface ProxyConfig {

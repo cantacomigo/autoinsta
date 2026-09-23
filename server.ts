@@ -65,6 +65,182 @@ app.get('/api/download-zip', async (_req: Request, res: Response) => {
   }
 });
 
+// API: Fetch real profile information from Instagram
+app.get('/api/instagram/profile', async (req: Request, res: Response) => {
+  const username = (req.query.username as string || '').replace(/^@/, '').trim();
+  if (!username) {
+    return res.status(400).json({ error: 'Username é obrigatório' });
+  }
+
+  try {
+    const resp = await fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'X-IG-App-ID': '936619743392459',
+        'Accept': 'application/json',
+        'Sec-Fetch-Site': 'same-origin',
+      },
+    });
+
+    if (!resp.ok) {
+      return res.status(resp.status).json({
+        error: `Instagram retornou status ${resp.status}`,
+        details: 'Perfil não encontrado ou restrito temporariamente pelo Instagram.'
+      });
+    }
+
+    const data: any = await resp.json();
+    const user = data?.data?.user;
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado no Instagram' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        fullName: user.full_name,
+        biography: user.biography,
+        profilePic: user.profile_pic_url_hd || user.profile_pic_url,
+        followers: user.edge_followed_by?.count || 0,
+        following: user.edge_follow?.count || 0,
+        postsCount: user.edge_owner_to_timeline_media?.count || 0,
+        isPrivate: user.is_private,
+        isVerified: user.is_verified,
+      }
+    });
+  } catch (err: any) {
+    console.error('Error fetching Instagram profile:', err);
+    res.status(500).json({ error: 'Erro ao conectar aos servidores do Instagram', details: err?.message });
+  }
+});
+
+// API: Verify Instagram Session (sessionId / cookies)
+app.post('/api/instagram/verify-session', async (req: Request, res: Response) => {
+  const { username, sessionId, csrfToken } = req.body;
+  const cleanUser = (username || '').replace(/^@/, '').trim();
+  if (!cleanUser || !sessionId) {
+    return res.status(400).json({ error: 'Username e sessionId são obrigatórios' });
+  }
+
+  try {
+    const cookieStr = `sessionid=${sessionId}; ${csrfToken ? `csrftoken=${csrfToken};` : ''} ds_user_id=${cleanUser}`;
+    const resp = await fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(cleanUser)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'X-IG-App-ID': '936619743392459',
+        'Cookie': cookieStr,
+        'Accept': 'application/json',
+      }
+    });
+
+    if (resp.ok) {
+      const data: any = await resp.json();
+      const user = data?.data?.user;
+      return res.json({
+        success: true,
+        valid: true,
+        user: {
+          id: user?.id,
+          username: user?.username,
+          fullName: user?.full_name,
+          followers: user?.edge_followed_by?.count || 0,
+          following: user?.edge_follow?.count || 0,
+          postsCount: user?.edge_owner_to_timeline_media?.count || 0,
+          profilePic: user?.profile_pic_url_hd || user?.profile_pic_url,
+        },
+        message: 'Sessão do Instagram autenticada e pronta para automação real!'
+      });
+    } else {
+      return res.status(401).json({
+        success: false,
+        valid: false,
+        error: 'Sessão inválida ou expirada no Instagram. Verifique o sessionId fornecido.'
+      });
+    }
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: 'Erro ao verificar sessão', details: err?.message });
+  }
+});
+
+// API: Execute real Instagram action (Follow / Like)
+app.post('/api/instagram/execute-action', async (req: Request, res: Response) => {
+  const { actionType, target, sessionId, csrfToken } = req.body;
+
+  if (!sessionId) {
+    return res.status(400).json({
+      success: false,
+      error: 'Nenhuma sessão do Instagram configurada. Conecte sua conta real com o sessionId na aba Contas & Proxies.'
+    });
+  }
+
+  try {
+    let cleanTarget = (target || '').replace(/^@/, '').trim();
+
+    if (actionType === 'follow') {
+      let targetUserId = cleanTarget;
+
+      // If not numeric ID, resolve via profile API
+      if (!/^\d+$/.test(cleanTarget)) {
+        const profileResp = await fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(cleanTarget)}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'X-IG-App-ID': '936619743392459',
+          }
+        });
+        if (profileResp.ok) {
+          const pData: any = await profileResp.json();
+          targetUserId = pData?.data?.user?.id;
+        }
+      }
+
+      if (!targetUserId) {
+        return res.status(404).json({ success: false, error: `Perfil @${cleanTarget} não encontrado no Instagram.` });
+      }
+
+      const cookieStr = `sessionid=${sessionId}; csrftoken=${csrfToken || ''};`;
+      const followResp = await fetch(`https://www.instagram.com/api/v1/web/friendships/${targetUserId}/follow/`, {
+        method: 'POST',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'X-IG-App-ID': '936619743392459',
+          'X-CSRFToken': csrfToken || '',
+          'Cookie': cookieStr,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Referer': `https://www.instagram.com/${cleanTarget}/`,
+        }
+      });
+
+      const followData: any = await followResp.json().catch(() => ({}));
+      if (followResp.ok && (followData.status === 'ok' || followData.result === 'following')) {
+        return res.json({
+          success: true,
+          actionType: 'follow',
+          target: `@${cleanTarget}`,
+          targetUserId,
+          message: `Seguiu @${cleanTarget} com sucesso no Instagram real!`,
+          raw: followData
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: followData.message || 'Instagram recusou a ação ou solicitou verificação (checkpoint/desafio).',
+          raw: followData
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Ação ${actionType} despachada.`
+    });
+  } catch (err: any) {
+    console.error('Error executing Instagram action:', err);
+    res.status(500).json({ success: false, error: err?.message || 'Falha na execução da ação' });
+  }
+});
+
 // Initialize Gemini SDK with server-side API key
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
 let genAI: GoogleGenAI | null = null;
