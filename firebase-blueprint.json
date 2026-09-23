@@ -1,0 +1,174 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile in AutoInsta",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp"
+        }
+      },
+      "required": ["email"]
+    },
+    "InstagramAccount": {
+      "title": "InstagramAccount",
+      "description": "Instagram account registered in AutoInsta",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "username": {
+          "type": "string",
+          "description": "Instagram username"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Account display name or niche"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "Profile picture URL"
+        },
+        "followers": {
+          "type": "number",
+          "description": "Follower count"
+        },
+        "following": {
+          "type": "number",
+          "description": "Following count"
+        },
+        "status": {
+          "type": "string",
+          "description": "Operational status (active, warming_up, paused)"
+        },
+        "warmUpDay": {
+          "type": "number",
+          "description": "Current day of warming up"
+        },
+        "warmUpTotalDays": {
+          "type": "number",
+          "description": "Total warm-up duration"
+        },
+        "proxyId": {
+          "type": "string",
+          "description": "Assigned proxy ID"
+        },
+        "safetyPreset": {
+          "type": "string",
+          "description": "Safety mode preset (safe, moderate, aggressive)"
+        }
+      },
+      "required": ["userId", "username", "status"]
+    },
+    "ProxyConfig": {
+      "title": "ProxyConfig",
+      "description": "Residential or mobile proxy configuration",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Friendly name of the proxy"
+        },
+        "type": {
+          "type": "string",
+          "description": "Proxy protocol (HTTP, HTTPS, SOCKS5)"
+        },
+        "host": {
+          "type": "string",
+          "description": "Host IP or domain"
+        },
+        "port": {
+          "type": "number",
+          "description": "Connection port"
+        },
+        "status": {
+          "type": "string",
+          "description": "Connection status (online, offline)"
+        },
+        "latencyMs": {
+          "type": "number",
+          "description": "Latency in milliseconds"
+        },
+        "location": {
+          "type": "string",
+          "description": "Geographical location"
+        },
+        "ip": {
+          "type": "string",
+          "description": "External IP address"
+        }
+      },
+      "required": ["userId", "host", "port", "type"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Execution log entry for an automated Instagram action",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User ID"
+        },
+        "accountId": {
+          "type": "string",
+          "description": "Instagram account ID"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp string"
+        },
+        "actionType": {
+          "type": "string",
+          "description": "Action performed (like, comment, follow, story, dm)"
+        },
+        "targetUser": {
+          "type": "string",
+          "description": "Target profile interacted with"
+        },
+        "detail": {
+          "type": "string",
+          "description": "Description of the action"
+        },
+        "status": {
+          "type": "string",
+          "description": "Result status (success, delayed, warning)"
+        }
+      },
+      "required": ["userId", "accountId", "actionType", "targetUser"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data"
+    },
+    "/users/{userId}/accounts/{accountId}": {
+      "schema": "InstagramAccount",
+      "description": "Instagram accounts owned by the user"
+    },
+    "/users/{userId}/proxies/{proxyId}": {
+      "schema": "ProxyConfig",
+      "description": "Proxies configured by the user"
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "Automation activity logs for the user's accounts"
+    }
+  }
+}

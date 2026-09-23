@@ -1,0 +1,6 @@
+{
+  "name": "AutoInsta - Automação Inteligente para Instagram",
+  "description": "Plataforma profissional de automação segura para Instagram com engajamento por hashtag e perfil, stories, DMs automáticas, multi-contas, proxies, warm-up e IA integrada.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

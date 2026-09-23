@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profile document
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // Subcollection: Instagram Accounts
+      match /accounts/{accountId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Subcollection: Proxies
+      match /proxies/{proxyId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Subcollection: Activity Logs
+      match /logs/{logId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
