@@ -276,6 +276,14 @@ app.get('/api/instagram/last-sync', (req: Request, res: Response) => {
   });
 });
 
+app.post('/api/instagram/reset-sync', (_req: Request, res: Response) => {
+  lastBrowserSync = null;
+  res.json({
+    success: true,
+    message: 'Cache de sincronização do navegador limpo com sucesso.',
+  });
+});
+
 // Initialize Gemini SDK with server-side API key
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
 let genAI: GoogleGenAI | null = null;

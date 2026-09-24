@@ -49,6 +49,7 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
   const [showAddProxyModal, setShowAddProxyModal] = useState(false);
   const [testingProxyId, setTestingProxyId] = useState<string | null>(null);
+  const [showWipeConfirm, setShowWipeConfirm] = useState(false);
 
   // New Account form state
   const [newUsername, setNewUsername] = useState('');
@@ -389,33 +390,45 @@ export const AccountsProxiesView: React.FC<AccountsProxiesViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {onRestoreDefaults && (
+            {onWipeAllData && !showWipeConfirm && (
               <button
-                onClick={() => {
-                  if (window.confirm('Deseja restaurar as contas e configurações padrão de exemplo?')) {
-                    onRestoreDefaults();
-                  }
-                }}
-                className="px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-300 font-medium transition-colors cursor-pointer"
-              >
-                ↺ Restaurar Dados de Exemplo
-              </button>
-            )}
-            {onWipeAllData && (
-              <button
-                onClick={() => {
-                  if (window.confirm('ATENÇÃO: Tem certeza que deseja excluir TUDO (todas as contas, proxies, segmentações e logs)? Ao atualizar a página, NADA voltará.')) {
-                    onWipeAllData();
-                  }
-                }}
+                onClick={() => setShowWipeConfirm(true)}
                 className="px-3.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 hover:border-rose-600 text-xs text-rose-300 hover:text-white font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Excluir Tudo Definitivamente</span>
+                <span>Limpar Todos os Dados</span>
               </button>
             )}
           </div>
         </div>
+
+        {showWipeConfirm && onWipeAllData && (
+          <div className="mt-3 p-3.5 rounded-lg bg-rose-950/40 border border-rose-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-2 text-rose-300 text-xs">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>
+                <strong>Confirmação de Limpeza:</strong> Deseja apagar todas as contas, proxies, segmentações e histórico?
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowWipeConfirm(false)}
+                className="px-3 py-1 text-xs text-neutral-400 hover:text-white rounded bg-neutral-800 hover:bg-neutral-700 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  onWipeAllData();
+                  setShowWipeConfirm(false);
+                }}
+                className="px-3 py-1 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded cursor-pointer shadow"
+              >
+                Sim, Limpar Tudo
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal: Conectar Nova Conta */}

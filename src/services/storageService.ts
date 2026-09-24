@@ -2,14 +2,31 @@ import { InstagramAccount, ProxyConfig, TargetingConfig, AutomationConfig, Activ
 import { initialAccounts, initialProxies, defaultTargeting, defaultAutomation, initialLogs } from '../data/mockData';
 
 const STORAGE_KEYS = {
-  HAS_INITIALIZED: 'autoinsta_has_initialized',
-  ACCOUNTS: 'autoinsta_accounts_v1',
-  PROXIES: 'autoinsta_proxies_v1',
-  TARGETING: 'autoinsta_targeting_v1',
-  AUTOMATION: 'autoinsta_automation_v1',
-  LOGS: 'autoinsta_logs_v1',
-  SELECTED_ACC_ID: 'autoinsta_selected_account_id',
+  HAS_INITIALIZED: 'autoinsta_has_initialized_clean_v2',
+  ACCOUNTS: 'autoinsta_accounts_clean_v2',
+  PROXIES: 'autoinsta_proxies_clean_v2',
+  TARGETING: 'autoinsta_targeting_clean_v2',
+  AUTOMATION: 'autoinsta_automation_clean_v2',
+  LOGS: 'autoinsta_logs_clean_v2',
+  SELECTED_ACC_ID: 'autoinsta_selected_account_id_clean_v2',
 };
+
+const LEGACY_KEYS = [
+  'autoinsta_has_initialized',
+  'autoinsta_accounts_v1',
+  'autoinsta_proxies_v1',
+  'autoinsta_targeting_v1',
+  'autoinsta_automation_v1',
+  'autoinsta_logs_v1',
+  'autoinsta_selected_account_id',
+  'autoinsta_has_initialized_clean_v1',
+  'autoinsta_accounts_clean_v1',
+  'autoinsta_proxies_clean_v1',
+  'autoinsta_targeting_clean_v1',
+  'autoinsta_automation_clean_v1',
+  'autoinsta_logs_clean_v1',
+  'autoinsta_selected_account_id_clean_v1',
+];
 
 export interface StoredAppState {
   accounts: InstagramAccount[];
@@ -21,12 +38,23 @@ export interface StoredAppState {
 }
 
 export const storageService = {
+  // Purge legacy mock data from previous sessions
+  purgeLegacyData() {
+    try {
+      LEGACY_KEYS.forEach((key) => localStorage.removeItem(key));
+    } catch (e) {
+      // ignore in SSR / restricted storage
+    }
+  },
+
   // Load initial state with persistent localStorage guarantee
   getInitialState(): StoredAppState {
     try {
+      this.purgeLegacyData();
+
       const hasInitialized = localStorage.getItem(STORAGE_KEYS.HAS_INITIALIZED);
 
-      // If user has visited and customized before (even if they deleted everything)
+      // If user has visited and saved customized data in this clean schema
       if (hasInitialized === 'true') {
         const rawAccounts = localStorage.getItem(STORAGE_KEYS.ACCOUNTS);
         const rawProxies = localStorage.getItem(STORAGE_KEYS.PROXIES);
@@ -45,14 +73,14 @@ export const storageService = {
         return { accounts, proxies, targeting, automation, logs, selectedAccountId };
       }
 
-      // First time visitor: seed default templates and immediately mark as initialized
+      // First time visitor in clean version: start with zero mock data!
       localStorage.setItem(STORAGE_KEYS.HAS_INITIALIZED, 'true');
       localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(initialAccounts));
       localStorage.setItem(STORAGE_KEYS.PROXIES, JSON.stringify(initialProxies));
       localStorage.setItem(STORAGE_KEYS.TARGETING, JSON.stringify(defaultTargeting));
       localStorage.setItem(STORAGE_KEYS.AUTOMATION, JSON.stringify(defaultAutomation));
       localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(initialLogs));
-      localStorage.setItem(STORAGE_KEYS.SELECTED_ACC_ID, initialAccounts[0]?.id || '');
+      localStorage.setItem(STORAGE_KEYS.SELECTED_ACC_ID, '');
 
       return {
         accounts: initialAccounts,
@@ -60,7 +88,7 @@ export const storageService = {
         targeting: defaultTargeting,
         automation: defaultAutomation,
         logs: initialLogs,
-        selectedAccountId: initialAccounts[0]?.id || null,
+        selectedAccountId: null,
       };
     } catch (e) {
       console.warn('Storage read warning:', e);
@@ -70,7 +98,7 @@ export const storageService = {
         targeting: defaultTargeting,
         automation: defaultAutomation,
         logs: initialLogs,
-        selectedAccountId: initialAccounts[0]?.id || null,
+        selectedAccountId: null,
       };
     }
   },
@@ -132,10 +160,8 @@ export const storageService = {
   // Completely wipe all data to zero, preventing any resurrection on reload
   wipeAllData(): StoredAppState {
     try {
-      localStorage.setItem(STORAGE_KEYS.HAS_INITIALIZED, 'true');
-      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify([]));
-      localStorage.setItem(STORAGE_KEYS.PROXIES, JSON.stringify([]));
-      
+      this.purgeLegacyData();
+
       const emptyTargeting: TargetingConfig = {
         hashtags: [],
         competitorAccounts: [],
@@ -171,6 +197,9 @@ export const storageService = {
         keywordTriggers: [],
       };
 
+      localStorage.setItem(STORAGE_KEYS.HAS_INITIALIZED, 'true');
+      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify([]));
+      localStorage.setItem(STORAGE_KEYS.PROXIES, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.TARGETING, JSON.stringify(emptyTargeting));
       localStorage.setItem(STORAGE_KEYS.AUTOMATION, JSON.stringify(emptyAutomation));
       localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify([]));
@@ -197,26 +226,8 @@ export const storageService = {
     }
   },
 
-  // Reset to initial demo templates if desired
+  // Reset to initial clean state
   restoreDefaults(): StoredAppState {
-    try {
-      localStorage.setItem(STORAGE_KEYS.HAS_INITIALIZED, 'true');
-      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(initialAccounts));
-      localStorage.setItem(STORAGE_KEYS.PROXIES, JSON.stringify(initialProxies));
-      localStorage.setItem(STORAGE_KEYS.TARGETING, JSON.stringify(defaultTargeting));
-      localStorage.setItem(STORAGE_KEYS.AUTOMATION, JSON.stringify(defaultAutomation));
-      localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(initialLogs));
-      localStorage.setItem(STORAGE_KEYS.SELECTED_ACC_ID, initialAccounts[0]?.id || '');
-    } catch (e) {
-      console.warn('Storage restore defaults error:', e);
-    }
-    return {
-      accounts: initialAccounts,
-      proxies: initialProxies,
-      targeting: defaultTargeting,
-      automation: defaultAutomation,
-      logs: initialLogs,
-      selectedAccountId: initialAccounts[0]?.id || null,
-    };
+    return this.wipeAllData();
   }
 };

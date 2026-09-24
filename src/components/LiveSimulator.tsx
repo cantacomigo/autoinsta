@@ -36,7 +36,7 @@ export const LiveSimulator: React.FC<LiveSimulatorProps> = ({
   const [currentStepText, setCurrentStepText] = useState<string>(
     isRunning ? 'Aguardando intervalo humano de proteção anti-ban...' : 'Automação pausada. Clique em Iniciar para ativar o robô.'
   );
-  const [currentUrl, setCurrentUrl] = useState<string>('https://instagram.com/explore/tags/vidasaudavel/');
+  const [currentUrl, setCurrentUrl] = useState<string>('https://instagram.com/');
 
   const actionRef = useRef(onExecuteManualAction);
   useEffect(() => {
@@ -194,24 +194,23 @@ export const LiveSimulator: React.FC<LiveSimulatorProps> = ({
             </span>
           </div>
 
-          <div className="relative rounded-md overflow-hidden border border-neutral-800 mb-2 aspect-[16/9] bg-neutral-900">
-            <img 
-              src="/src/assets/images/post_lifestyle_fashion_1790187950485.jpg" 
-              alt="Preview da publicação no Instagram"
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+          {logs.length > 0 && logs[0].targetUser !== 'Sistema' ? (
+            <div className="relative rounded-md overflow-hidden border border-neutral-800 mb-2 aspect-[16/9] bg-neutral-900 flex flex-col justify-end p-3">
               <div className="text-xs text-white">
-                <p className="font-semibold">@marina_fit_coach</p>
-                <p className="text-[11px] text-neutral-300 truncate">Receita prática pré-treino + hábitos matinais 🥑</p>
+                <p className="font-semibold text-rose-400">{logs[0].targetUser}</p>
+                <p className="text-[11px] text-neutral-300 truncate mt-0.5">{logs[0].detail}</p>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-md border border-dashed border-neutral-800 mb-2 aspect-[16/9] bg-neutral-900/40 flex flex-col items-center justify-center p-4 text-center">
+              <p className="text-xs text-neutral-400 font-medium">Aguardando interações...</p>
+              <p className="text-[11px] text-neutral-500 mt-1">O robô exibirá os perfis e postagens conforme as ações forem executadas.</p>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-xs text-neutral-400 pt-1">
-            <span>Hashtag: <strong className="text-neutral-200">#vidasaudavel</strong></span>
-            <span className="font-mono tabular-nums">2.4k curtidas</span>
+            <span>Status: <strong className="text-neutral-200">{isRunning ? 'Em execução' : 'Pausado'}</strong></span>
+            <span className="font-mono tabular-nums">{logs.length} ações no histórico</span>
           </div>
         </div>
       </div>

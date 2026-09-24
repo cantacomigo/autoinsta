@@ -220,20 +220,24 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
 
             {/* Tags list */}
             <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-              {targeting.hashtags.map((tag) => (
-                <div
-                  key={tag}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
-                >
-                  <span className="font-mono">{tag}</span>
-                  <button
-                    onClick={() => removeHashtag(tag)}
-                    className="text-neutral-400 hover:text-rose-400 transition-colors"
+              {targeting.hashtags.length === 0 ? (
+                <p className="text-xs text-neutral-500 italic py-2">Nenhuma hashtag cadastrada. Adicione hashtags do seu nicho acima.</p>
+              ) : (
+                targeting.hashtags.map((tag) => (
+                  <div
+                    key={tag}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+                    <span className="font-mono">{tag}</span>
+                    <button
+                      onClick={() => removeHashtag(tag)}
+                      className="text-neutral-400 hover:text-rose-400 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -283,20 +287,24 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
             </div>
 
             <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-              {targeting.competitorAccounts.map((comp) => (
-                <div
-                  key={comp}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
-                >
-                  <span className="font-semibold">{comp}</span>
-                  <button
-                    onClick={() => removeCompetitor(comp)}
-                    className="text-neutral-400 hover:text-rose-400 transition-colors"
+              {targeting.competitorAccounts.length === 0 ? (
+                <p className="text-xs text-neutral-500 italic py-2">Nenhum concorrente cadastrado. Adicione perfis de referência acima.</p>
+              ) : (
+                targeting.competitorAccounts.map((comp) => (
+                  <div
+                    key={comp}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+                    <span className="font-semibold">{comp}</span>
+                    <button
+                      onClick={() => removeCompetitor(comp)}
+                      className="text-neutral-400 hover:text-rose-400 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -346,20 +354,24 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
             </div>
 
             <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-              {targeting.locations.map((loc) => (
-                <div
-                  key={loc}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
-                >
-                  <span>{loc}</span>
-                  <button
-                    onClick={() => removeLocation(loc)}
-                    className="text-neutral-400 hover:text-rose-400 transition-colors"
+              {targeting.locations.length === 0 ? (
+                <p className="text-xs text-neutral-500 italic py-2">Nenhuma localização cadastrada. Adicione sua cidade ou pontos de interesse.</p>
+              ) : (
+                targeting.locations.map((loc) => (
+                  <div
+                    key={loc}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+                    <span>{loc}</span>
+                    <button
+                      onClick={() => removeLocation(loc)}
+                      className="text-neutral-400 hover:text-rose-400 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -417,20 +429,24 @@ export const TargetingView: React.FC<TargetingViewProps> = ({
             </div>
 
             <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1">
-              {targeting.postCommenters.map((url) => (
-                <div
-                  key={url}
-                  className="flex items-center justify-between px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
-                >
-                  <span className="font-mono truncate max-w-[280px]">{url}</span>
-                  <button
-                    onClick={() => removePostUrl(url)}
-                    className="text-neutral-400 hover:text-rose-400 transition-colors shrink-0 ml-2"
+              {targeting.postCommenters.length === 0 ? (
+                <p className="text-xs text-neutral-500 italic py-2">Nenhum post vinculado. Cole o link de um post com comentários acima.</p>
+              ) : (
+                targeting.postCommenters.map((url) => (
+                  <div
+                    key={url}
+                    className="flex items-center justify-between px-2.5 py-1 rounded bg-neutral-800/80 border border-neutral-700/60 text-xs text-neutral-200"
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+                    <span className="font-mono truncate max-w-[280px]">{url}</span>
+                    <button
+                      onClick={() => removePostUrl(url)}
+                      className="text-neutral-400 hover:text-rose-400 transition-colors shrink-0 ml-2"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

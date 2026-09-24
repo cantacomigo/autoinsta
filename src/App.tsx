@@ -377,6 +377,12 @@ export default function App() {
     setSelectedAccountId(emptyState.selectedAccountId);
     setIsAutomationRunning(false);
 
+    try {
+      await fetch('/api/instagram/reset-sync', { method: 'POST' });
+    } catch (e) {
+      // ignore
+    }
+
     if (currentUser) {
       await firebaseService.clearAllUserData(currentUser.uid);
     }
